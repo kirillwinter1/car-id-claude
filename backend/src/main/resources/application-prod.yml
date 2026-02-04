@@ -1,0 +1,91 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: CarID-prod
+  dataSource:
+    url: ENC(WngdHUH5K66sUk9ZIh95PTu0EG7/8cdVXspKKAFBfgDSUA2Klu49jgQNbHv9ZAcMxCy83kdiJNpgExeDF/cfB34T7nUQ+gsX8o6EfqldpEU=)
+    username: ENC(Igbe/l5N61d6/wJcJjHJx+o3VjL0m0K/bDkEu7l1nTYs9weO/6HedgGJPnQidh69)
+    password: ENC(htVmE9ZWKkHnpZCFDZrT/wu8WiEthGY9d+F7HEgmgtSaT4h0T//Ff11ekU2n1I6K)
+    driver-class-name: org.postgresql.Driver
+    dialect: PostgreSQL94Dialect
+  liquibase:
+    contexts: prod
+    change-log: classpath:db/master.xml
+    enabled: true
+
+logger:
+  levels:
+    org.springframework: INFO
+    liquibase: INFO
+    ru.car: DEBUG
+
+springdoc:
+  #  api-docs:
+  #    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  enabled: true
+swagger:
+  server:
+    url: https://car-id.ru
+
+token:
+  signing:
+    key: ENC(OIimZ2VxL6UFwOfUcsfIlOyUwJvvnIXFVQZSAKhCKw71vbIjqaF0ZLo03wEfCGuP/zt/LzInhejJc+gZM/sxEzZ2r9AwbygjrzMtyo2HbtB6tMzrhmAxSK4KyyVysqPrexc2VwtQFDq5uoCGPOM+5A==)
+
+admin:
+  phone: ENC(HRaJyKX6dXuksXzubHL1+yrfrZEcg6hBtcCX1Ir/gKFGxppifoTO8FfWXFt0xjVc)
+  code: ENC(UuIpQzOBVbZiWZB9kOnZ+en54xz7ksM63189yTjlyi1SMi2kN+Z/Yp0grMgR8QE8)
+
+telegram:
+  bot: car_id_ru_bot
+  token: ENV(EekU/9nmDaabf85Cn7rP6xvmOacNDImFkZyl9OuyDIu1fOrQNYUHWePv4lYkaUqRumh0vS42i4KB87HMUuwy3hczbUMumI0+zXypU/Tsiq0=)
+  feedbackChannelId: -4259521560
+  enable: true
+
+green-api:
+  host: https://api.green-api.com
+  hostMedia: https://media.green-api.com
+  instanceId: ENC(VwWQsJ8LpEgbDXJS4iu2J0OuK7Ij2DAqJGRKpgkXgpNEuCAmSt4cM1dXv+kycDju)
+  token: ENC(HA/tTm6HQrO8sFpVEm4j79ZmLMPvT6F0KFCJD46Orp4f0Jb1zorzKX53OVWzpwr/svbsMga0TQkJonr2ZojQgheWdH3T57YkcSdEx7ewvZloiqiooerp4NOtwzom2SAg)
+
+firebase:
+  url: https://fcm.googleapis.com/v1/projects/car-id-55917/messages:send
+  sourceCredentials: /firebase/car-id-55917-601a5782f3a2.json
+  scopeCredentials:
+    - https://www.googleapis.com/auth/firebase.messaging
+
+zvonok:
+  urlFlashcall: https://zvonok.com/manager/cabapi_external/api/v1/phones/flashcall/
+  urlCall: https://zvonok.com/manager/cabapi_external/api/v1/phones/call/
+  flashcallCampaignId: ENC(4y4k67i64v02wvyU+2u/t+Te7vxPhnboasWXhwOaehiIdL1FKOO54pUTq6QclMh8)
+  codeCallCampaignId: ENC(Ajhr54tSrItPhJEIYKH1XHhVeiuJ9DOM+QajYYNLi4s/vYppamxEKz4TJ+1dtYLz)
+  callCampaignId: ENC(F7g+o/XDCVkS+g/TQdEwFZ7+SRXNNFUPM42fNtj4NoddkUEDOkNemB3sHmch2qk8)
+  publicKeyApi: ENV(GRdEZlvcMCy6uREuqCXjgelMFQnvNn8hnwfPyMOtms6K1YzVb+s2eW12l4oymzHS7zprsPNEccgV354wRGxQ/gWzT1gKZJjVbCzGuQvWxDg=)
+
+mail:
+  receiverMail: help@car-id.ru
+  senderMail: ENC(yFPaW1UrmdYZCnvX9u6kUp07Lt0/KbKJMcsNWU9CbdchqRISyw0rApDdCuAIrOISkQ2EwLlsvAKJPWOlKyYiXw==)
+  password: ENV(mGob51cnBteFqh0jFxpZ8dZRX86OnwJhUh5KqikoL3ZGWCSaej6hRmh/m/MzI5BlrYJirFPyJkOP/Z2fpcbV4A==)
+  smtpHost: ENC(JxnPBP6BYHJVWLa6J6fda1Dqxw2Z0zUD/83epGO59MYjYcSGgixyjOXGNZGTRKuL3QK9rybaT5JiUg/GPej6Yg==)
+
+management:
+  endpoints:
+    health:
+      show-details: always
+    web:
+      exposure:
+        include: health,prometheus
+  #        include: "*"
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+
+jasypt:
+  encryptor:
+    myPassword: changeIt

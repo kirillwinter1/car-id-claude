@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+        <meta charset="utf-8" />
+        <title>Car ID - ваша личная автовизитка</title>
+        <link rel="stylesheet" href="/css/reset.css" />
+        <link rel="stylesheet" href="/css/style.css" />
+        <link rel="stylesheet" href="/css/svg-bg.css" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link rel="icon" href="/favicon.ico"><!-- 32×32 -->
+        <link rel="icon" href="/img/favicons/icon.svg" type="image/svg+xml">
+        <link rel="apple-touch-icon" href="/img/favicons/180.png"><!-- 180×180 -->
+        <link rel="manifest" href="/favicon.webmanifest">
+    </head>
+
+    <body>
+        <div class="modal-container"></div>
+
+        <header class="header">
+            <a href="./" class="logo">
+                <img src="/img/logo.svg" width="125" height="34" alt="logo" />
+            </a>
+        </header>
+
+        <main class="main">
+            <section id="send-msg">
+                <h2>Сообщить о событии</h2>
+                <p>Выберите событие и мы отправим владельцу авто уведомление в приложение</p>
+                <p>(Мы ограничили отправку уведомлений через браузер до 1 раза в час, чтобы исключить нежелательные уведомления. Без ограничений вы можете отправлять уведомления через приложение.)</p>
+
+                <form class="form">
+                    <div id="radio-btns">
+                        <div class="event-list-loader"></div>
+                        <div class="event-list-loader"></div>
+                        <div class="event-list-loader"></div>
+                    </div>
+                    <p class="notification">
+                        Продолжая Вы соглашаетесь с
+                        <a href="https://car-id.ru/offer" target="_blank">правилами сервиса</a>
+                    </p>
+                    <button id="submit" class="primary-btn" disabled>Сообщить</button>
+                </form>
+            </section>
+
+            <section class="buy-sticker">
+                <h2>Купить стикер для Вашего авто</h2>
+
+                <div class="marketplaces">
+                    <a class="ozon" href="https://ozon.ru/t/gXqGlgj" target="_blank">Ozon</a>
+                    <a class="wb" href="https://www.wildberries.ru/catalog/267028144/detail.aspx" target="_blank">Wildberries</a>
+                </div>
+            </section>
+
+<!--            <section>-->
+<!--                <div class="tinkoff">-->
+<!--                    <h2>Оформи карту Black по <a href="https://www.tbank.ru/baf/95u4q8OGYeL" class="text-link">ссылке</a></h2>-->
+<!--                    <h2>Получи 500 рублей на счет</h2>-->
+<!--                </div>-->
+
+<!--                <a href="https://www.tbank.ru/baf/95u4q8OGYeL">-->
+<!--                    <img src="/img/tinkoff.jpg" alt="Image with link">-->
+<!--                </a>-->
+<!--            </section>-->
+
+            <section class="download-app">
+                <h2>Скачать приложение</h2>
+
+                <div class="app-stors">
+                    <div class="description">
+                        <h3>Car ID</h3>
+                        <p>Стикер c QR-кодом для&nbsp;вашего авто</p>
+                    </div>
+
+                    <div class="icons">
+                        <a href="https://apps.apple.com/ru/app/id6499054732" target="_blank">
+                            <img src="/img/AppStore.svg" width="145px" height="47px" alt="AppStore logo" />
+                        </a>
+
+                        <a href="https://www.rustore.ru/catalog/app/ru.caridmobile.app" target="_blank">
+                            <img src="/img/RuStore.svg" style="margin: -2px -2px" width="145" height="51" alt="Скачайте из RuStore" />
+                        </a>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-contetnt">
+                <nav>
+                    <ul>
+                        <li><a href="https://t.me/car_ID_support" target="_blank">Связаться с нами</a></li>
+                        <li>
+                            <a href="https://car-id.ru/offer" target="_blank">Публичная оферта</a>
+                        </li>
+                        <li>
+                            <a href="https://car-id.ru/privacy-policy" target="_blank">Политика конфиденциальности</a>
+                        </li>
+                    </ul>
+
+                    <a class="telegram" href="https://t.me/car_ID_support" target="_blank">
+                        <img src="/img/Telegram_2019_Logo.svg" width="51px" height="43px" alt="telegram logo" />
+                    </a>
+                </nav>
+
+                <span class="copyright">©️ 2024 Car ID</span>
+            </div>
+        </footer>
+    </body>
+    <script type="module" src="/js/sendMsg.js"></script>
+</html>

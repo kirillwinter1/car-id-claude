@@ -1,0 +1,103 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: CarID-local
+  dataSource:
+    url: jdbc:h2:mem:test;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ''
+    driverClassName: org.h2.Driver
+    dialect: H2
+  liquibase:
+    contexts: local
+    change-log: classpath:db/master.xml
+    enabled: true
+
+logger:
+  levels:
+    org.springframework: INFO
+    liquibase: INFO
+    ru.car: DEBUG
+
+springdoc:
+#  api-docs:
+#    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+  enabled: true
+swagger:
+  server:
+#    url: http://localhost:8081
+    url: https://car-id.ru
+
+token:
+  signing:
+    key: ${TOKEN_SIGNING_KEY:53A73E5F1C4E0A2D3B5F2D784E6A1B423D6F247D1F6E5C3A596D635A75327855}
+
+admin:
+  phone: 79008007766
+  code: 1111
+
+telegram:
+  bot: car_id_test_bot
+  token: ENC(FjY16UrUAcpcx22Bo68nnxDJvrVWb3AP0To7YYqDS7h2vRQmhxkgNu9Zlf463k7qz5+lZNftqC/847DpzZn1wr15vCNitzTD+WHBy7nC8l8=)
+  feedbackChannelId: -1002067117934
+  enable: true
+
+green-api:
+  host: https://api.green-api.com
+  hostMedia: https://media.green-api.com
+  instanceId: ${GREEN_API_INSTANCE_ID:1103935562}
+  token: ENC(/3duqvGcsgu6N9l/Rit6ntcpB/csGaONqrImPlzsmVIsk2cCK4XTX3xXdyQB/loamKJ0CL5pLqIt9LLPxSNgASRap5kSHDV6gX21pry1i9gPpbz6OT0tD4pth5JB8Ivh)
+
+firebase:
+  url: https://fcm.googleapis.com/v1/projects/car-id-55917/messages:send
+  sourceCredentials: /firebase/car-id-55917-601a5782f3a2.json
+  scopeCredentials:
+    - https://www.googleapis.com/auth/firebase.messaging
+
+zvonok:
+  urlFlashcall: https://zvonok.com/manager/cabapi_external/api/v1/phones/flashcall/
+  urlCall: https://zvonok.com/manager/cabapi_external/api/v1/phones/call/
+  flashcallCampaignId: 1017721904
+  codeCallCampaignId: 362622836
+  callCampaignId: 755592686
+  publicKeyApi: ENC(lkHud5XgI0Pe8Ro7Fc075R0uUp932nKf7zmx+qEKFVXPrqtKQenKEwnV4GA9IVcBXz3kXqK6SjF6ntdxzD/E92ZaUc5IWQgwI/+lW0i6w7Q=)
+
+mail:
+  receiverMail: help@car-id.ru
+  senderMail: yatsenko.bv@yahoo.com
+  password: ENC(aRUpvgsDs4MPHdj1RYVbmicO/+fesMHXv1zsWDncTFhX/IIshJ3Al/7McAyNtQvNALJKUVn037oF9FV/yLI3Xw==)
+  smtpHost: smtp.mail.yahoo.com
+
+
+management:
+  endpoints:
+    health:
+      show-details: always
+    web:
+      exposure:
+        include: prometheus,metrics
+  endpoint:
+    metrics:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    distribution:
+      percentiles-histogram:
+        "[http.server.requests]": true
+
+    binders:
+      jvm:
+        enabled: false
+        #    tags:
+#      application: ${spring.application.name}
+
+
+
+jasypt:
+  encryptor:
+    myPassword: local

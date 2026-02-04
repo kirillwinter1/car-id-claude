@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+		    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="1.1.0" author="novikovdd">
+        <insert tableName="qr_batches" schemaName="${schema}">
+            <column name="template" value="NOT_SPECIFIED"/>
+            <column name="distribution_method" value="NOT_SPECIFIED"/>
+            <column name="address" value=""/>
+        </insert>
+
+        <insert tableName="reason_dictionary" schemaName="${schema}">
+            <column name="description" value="Автомобиль мешает"/>
+        </insert>
+        <insert tableName="reason_dictionary" schemaName="${schema}">
+            <column name="description" value="Автомобиль эвакуируют"/>
+        </insert>
+        <insert tableName="reason_dictionary" schemaName="${schema}">
+            <column name="description" value="Произошло ДТП"/>
+        </insert>
+        <insert tableName="reason_dictionary" schemaName="${schema}">
+            <column name="description" value="Открыто окно"/>
+        </insert>
+        <insert tableName="reason_dictionary" schemaName="${schema}">
+            <column name="description" value="Работает сигнализация"/>
+        </insert>
+        <insert tableName="reason_dictionary" schemaName="${schema}">
+            <column name="description" value="Спущено колесо"/>
+        </insert>
+        <insert tableName="reason_dictionary" schemaName="${schema}">
+            <column name="description" value="Мойка завершена"/>
+        </insert>
+        <insert tableName="reason_dictionary" schemaName="${schema}">
+            <column name="description" value="Ремонт завершен"/>
+        </insert>
+
+        <insert tableName="version_control" schemaName="${schema}">
+            <column name="apple_current" value="1"/>
+            <column name="apple_min" value="1"/>
+            <column name="google_current" value="1"/>
+            <column name="google_min" value="1"/>
+            <column name="rustore_current" value="1"/>
+            <column name="rustore_min" value="1"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

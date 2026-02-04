@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+		    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="1.11.0" author="novikovdd">
+        <addColumn tableName="qr_batches" schemaName="${schema}">
+            <column name="description" type="text" />
+        </addColumn>
+        <addDefaultValue tableName="qr_batches" columnName="address" schemaName="${schema}" defaultValue=""/>
+    </changeSet>
+
+    <changeSet id="1.11.1" author="novikovdd" context="prod">
+        <loadData tableName="qr_batches" file="db/changelog/data/qr_batches_25.06.2024.csv" schemaName="${schema}">
+            <column header="template" name="template" type="STRING"/>
+            <column header="distribution_method" name="distribution_method" type="STRING"/>
+            <column header="description" name="description" type="STRING"/>
+        </loadData>
+    </changeSet>
+
+    <changeSet id="1.11.2" author="novikovdd" context="prod">
+        <delete tableName="qrs" schemaName="${schema}">
+            <where>id not in (
+                'd1cc843a-1548-4735-a1f7-6a6eb1cc83c8',
+                '47cdc599-4187-482b-b82d-074423374c13',
+                '80c8d22c-9432-4f12-9f85-2710a9ffb814',
+                'be9a2af3-8b63-416a-a4c5-b802c821d3e4',
+                '841d4b51-23a5-4899-a54f-a96d5049a0b1',
+                'ee8a08f3-cccf-44e1-bebe-edf2910f96b9',
+                '90c68678-20e2-4b97-b8c2-f7ff72d571b7',
+                '485b798f-7312-4476-a15d-6eaa32d0d5e9',
+                '83c15259-0f84-49b1-9405-ed62ca00b2f2',
+                '9c2e8cdc-21e5-42ad-9b46-e9a6f0ca6361',
+                '75bbf021-2868-4503-9eab-0acc434a12bb',
+                '18a8243b-23b6-49f7-971a-4f299de5275a',
+                '194f21df-e6db-4c70-93f0-f061685bab22',
+                'c9d86d88-b94b-4a89-aa86-498082071ffe',
+                '74950d0e-6620-4ea3-bedc-02b761688c8d',
+                'e777f897-ab20-44a6-969f-976a135bab18',
+                'bb191b8e-437e-462b-8f6f-fef5932d7c4f',
+                '3bcc5571-6423-4033-abca-90c3e153c443',
+                '89080b13-912e-4a16-bcdf-a23b632ae465',
+                '4cf90a17-c031-4249-a523-014149b0a148',
+                '5fcd6f5d-54c5-49da-9e7c-873c7ed1a2d4',
+                '9f7f973a-8485-4e3a-aec1-5a92c2d86e3f',
+                '49735cc4-2a4a-47f5-baa0-8ed0af55f59b',
+                '41b9b2c0-332d-4f62-851b-3f338c82e315',
+                '4ba754e6-530b-481a-b579-3b2bf9f02e60',
+                'd221b8ea-7594-446d-85a5-b336e65c6fc0',
+                'f65ea1e7-1805-40db-b38f-679deefd853a',
+                '9b3b0e78-d161-4904-8dfd-5e96788dced9',
+                '02b51682-d84a-4a5d-8967-e57261bf8638',
+                '5959b961-9789-41af-a68c-eee1814a121d',
+                'a830763c-13c7-4e96-92b4-27b17d9e2fe8',
+                '9915a87c-a8fc-412f-9373-d9786ce27b1b',
+                '6b2a6d5e-43a6-4927-985f-032aef4c0b8e',
+                'f76149f1-eaac-476d-91fe-a9f483073a80',
+                '63d7efbd-4b19-40c3-8cd4-140396fa232e',
+                '1b81b5aa-a26c-4f77-a053-b444613ee08c',
+                '09d73df3-01e0-4ade-9796-f941a05c23c7',
+                '690d2e46-620e-46a6-a2f1-b43945e621b8',
+                '6bf9983f-896d-456a-a81f-b295c6f0fb46',
+                '8f4f516a-7e78-4197-ac41-cb6a70972568'
+                )</where>
+        </delete>
+    </changeSet>
+
+</databaseChangeLog>

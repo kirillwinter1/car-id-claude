@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+		    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="1.15.1" author="novikovdd" context="prod">
+        <loadData tableName="qr_batches" file="db/changelog/data/qr_batches_05.11.2024.csv" schemaName="${schema}">
+            <column header="template" name="template" type="STRING"/>
+            <column header="distribution_method" name="distribution_method" type="STRING"/>
+            <column header="description" name="description" type="STRING"/>
+        </loadData>
+    </changeSet>
+
+    <changeSet id="1.15.2" author="novikovdd" context="prod">
+        <loadData tableName="qrs" file="db/changelog/data/qr_05.11.2024.csv" schemaName="${schema}">
+            <column header="id" name="id" type="UUID"/>
+            <column header="batch_id" name="batch_id" type="STRING"/>
+        </loadData>
+    </changeSet>
+
+</databaseChangeLog>

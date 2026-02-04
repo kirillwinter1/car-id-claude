@@ -1,0 +1,120 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.2.3'
+	id 'io.spring.dependency-management' version '1.1.4'
+}
+
+group = 'ru.car'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	sourceCompatibility = '17'
+}
+
+bootJar {
+	archiveFileName = "${archiveBaseName.get()}.${archiveExtension.get()}"
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'io.micrometer:micrometer-core'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
+
+//	swagger
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.4.0'
+
+//  security
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+	implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+	implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'com.h2database:h2'
+	runtimeOnly 'org.postgresql:postgresql'
+	implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+//	qr
+	implementation 'com.google.zxing:core:3.3.0'
+	implementation 'com.google.zxing:javase:3.3.0'
+//	svg -> pdf
+	implementation 'com.itextpdf:svg:7.1.2'
+	implementation 'org.apache.pdfbox:pdfbox:3.0.1'
+	implementation 'org.apache.xmlgraphics:fop:2.9'
+
+//	telegram
+	implementation 'org.telegram:telegrambots-spring-boot-starter:6.7.0'
+//	sms
+	implementation 'com.googlecode.json-simple:json-simple:1.1'
+//	whatsapp
+	implementation 'com.green-api:whatsapp-api-client-java:0.0.1'
+//	mail
+	implementation 'com.sun.mail:jakarta.mail:2.0.1'
+
+//	implementation 'com.github.ulisesbocchio:jasypt-spring-boot:2.0.0'
+	implementation 'com.github.ulisesbocchio:jasypt-spring-boot-starter:3.0.5'
+
+	implementation 'org.apache.commons:commons-collections4:4.4'
+	implementation 'org.apache.commons:commons-lang3:3.12.0'
+
+
+	implementation 'org.liquibase:liquibase-core'
+
+	implementation 'com.google.auth:google-auth-library-oauth2-http:1.23.0'
+
+
+	annotationProcessor 'org.projectlombok:lombok'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.security:spring-security-test'
+
+//  интеграционный тест
+	testImplementation 'com.codeborne:selenide:7.3.1'
+}
+
+//liquibase {
+//	activities {
+//		main {
+//			print '${projectDir}/resources/db/master.xml'
+//			changeLogFile '${projectDir}/resources/db/master.xml'
+//			url 'jdbc:h2:mem:test;DB_CLOSE_DELAY=-1'
+//			username 'sa'
+//			password ''
+//			driver 'org.h2.Driver'
+//		}
+//	}
+//}
+
+configurations.implementation {
+	exclude group: 'commons-logging', module: 'commons-logging'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
+
+//task 'deployChangeLog' {
+//	doFirst() {
+//		liquibase {
+//			activities {
+//				main {
+//					changeLogFile System.properties.liquibaseChangeLogFile
+//					contexts System.properties.liquibaseContexts
+//				}
+//			}
+//		}
+//	}
+//}
+//update.dependsOn('deployChangeLog')

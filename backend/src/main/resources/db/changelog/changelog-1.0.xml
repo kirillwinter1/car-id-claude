@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+		    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="1.0.0" author="novikovdd">
+
+        <createTable tableName="users" schemaName="${schema}">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="users_pk"/>
+            </column>
+            <column name="phone_number" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="role" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp" defaultValue="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex indexName="ix_users_phone_number" tableName="users" schemaName="${schema}">
+            <column name="phone_number"/>
+        </createIndex>
+
+        <createTable tableName="reason_dictionary" schemaName="${schema}">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="reason_dictionary_pk"/>
+            </column>
+            <column name="description" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="authentication_code" schemaName="${schema}">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="authentication_code_pk"/>
+            </column>
+            <column name="phone_number" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="varchar(4)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp" defaultValue="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sms_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <createIndex indexName="ix_authentication_code_phone_number" tableName="authentication_code" schemaName="${schema}">
+            <column name="phone_number"/>
+        </createIndex>
+
+        <createTable tableName="qr_batches" schemaName="${schema}">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="qr_butches_pk"/>
+            </column>
+            <column name="template" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp" defaultValue="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="distribution_method" type="varchar(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="address" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createSequence sequenceName="seq_seq_number" schemaName="${schema}" startValue="1" incrementBy="1"/>
+
+        <createTable tableName="qrs" schemaName="${schema}">
+            <column name="id" type="UUID">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="qrs_pk"/>
+            </column>
+            <column name="seq_number" type="bigint" defaultValue="nextval('seq_seq_number')">
+                <constraints nullable="false"/>
+            </column>
+            <column name="batch_id" type="bigint" defaultValueNumeric="1">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="printed" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp" defaultValue="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_date" type="timestamp">
+                <constraints nullable="true"/>
+            </column>
+            <column name="activate_date" type="timestamp">
+                <constraints nullable="true"/>
+            </column>
+            <column name="delete_date" type="timestamp">
+                <constraints nullable="true"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="qrs"
+                                 baseColumnNames="batch_id"
+                                 constraintName="fk_qrs_to_qr_batches"
+                                 referencedTableName="qr_batches"
+                                 referencedColumnNames="id" />
+        <addForeignKeyConstraint baseTableName="qrs"
+                                 baseColumnNames="user_id"
+                                 constraintName="fk_qrs_to_users"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id" />
+
+
+        <createTable tableName="notifications" schemaName="${schema}">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="notifications_pk"/>
+            </column>
+            <column name="qr_id" type="UUID">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="text" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="created_date" type="timestamp" defaultValue="now()">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="notifications"
+                                 baseColumnNames="qr_id"
+                                 constraintName="fk_notifications_to_qrs"
+                                 referencedTableName="qrs"
+                                 referencedColumnNames="id" />
+        <addForeignKeyConstraint baseTableName="notifications"
+                                 baseColumnNames="reason_id"
+                                 constraintName="fk_notifications_to_reason_dictionary"
+                                 referencedTableName="reason_dictionary"
+                                 referencedColumnNames="id" />
+
+
+        <createTable tableName="notification_settings" schemaName="${schema}">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="notification_settings_pk"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="push_enabled" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="call_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="telegram_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="whatsapp_enabled" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="boolean" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="telegram_dialog_id" type="bigint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="token" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="notification_settings"
+                                 baseColumnNames="user_id"
+                                 constraintName="fk_notification_settings_to_users"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id" />
+
+
+        <createTable tableName="feedbacks" schemaName="${schema}">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="feedbacks_pk"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="channel" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="text" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="timestamp" defaultValue="now()">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="feedbacks"
+                                 baseColumnNames="user_id"
+                                 constraintName="fk_feedbacks_to_users"
+                                 referencedTableName="users"
+                                 referencedColumnNames="id" />
+
+        <createTable tableName="version_control" schemaName="${schema}">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="version_control_pk"/>
+            </column>
+            <column name="apple_current" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="apple_min" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="google_current" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="google_min" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rustore_current" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rustore_min" type="varchar(15)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>

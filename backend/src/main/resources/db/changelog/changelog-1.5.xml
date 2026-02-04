@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+		    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="1.5.0" author="novikovdd">
+        <createTable tableName="marketplaces" schemaName="${schema}">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="marketplaces_pk"/>
+            </column>
+            <column name="wb" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="ozon" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="activity" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <insert tableName="marketplaces" schemaName="${schema}">
+            <column name="activity" value="false"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+		    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="1.2.0" author="novikovdd" context="prod">
+        <addDefaultValue tableName="qrs" columnName="status" defaultValue="NEW"/>
+
+        <loadData tableName="qrs" file="db/changelog/data/qr.csv">
+            <column header="id" name="id" type="STRING"/>
+        </loadData>
+    </changeSet>
+
+    <changeSet id="1.2.0" author="novikovdd" context="dev">
+        <addDefaultValue tableName="qrs" columnName="status" defaultValue="NEW"/>
+    </changeSet>
+
+    <changeSet id="1.2.0" author="novikovdd" context="local">
+        <addDefaultValue tableName="qrs" columnName="status" defaultValue="NEW"/>
+    </changeSet>
+
+</databaseChangeLog>

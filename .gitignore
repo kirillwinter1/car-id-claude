@@ -1,0 +1,41 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Build artifacts
+build/
+dist/
+out/
+target/
+
+# Dependencies
+node_modules/
+
+# Environment & Secrets
+.env
+.env/
+.env.local
+.env.*.local
+
+# Firebase & Google credentials
+**/car-id-*.json
+**/google-services.json
+**/GoogleService-Info.plist
+
+# Signing keys & certificates
+*.jks
+*.p8
+*.pem
+*.cer
+key.properties

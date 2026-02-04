@@ -1,0 +1,24 @@
+stages:
+  - package
+  - deploy
+
+package:
+  stage: package
+  script: ./gradlew clean bootJar
+  artifacts:
+    paths:
+      - build/libs
+  only:
+    - master
+    - main
+
+deploy:
+  stage: deploy
+  script:
+    - echo deploy
+    - mv build/libs/carId.jar ~/deploy/
+    - ./gradlew clean
+    - sudo systemctl restart car_id.service
+  only:
+    - master
+    - main
