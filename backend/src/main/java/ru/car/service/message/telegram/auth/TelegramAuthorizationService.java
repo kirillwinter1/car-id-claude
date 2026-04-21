@@ -48,7 +48,7 @@ public class TelegramAuthorizationService {
         ReplyKeyboardMarkup markup = new ReplyKeyboardMarkup();
         markup.setResizeKeyboard(true);
         markup.setOneTimeKeyboard(false);
-        KeyboardButton button = new KeyboardButton("поделиться контактом");
+        KeyboardButton button = new KeyboardButton(messages.get("tg.auth.btn.share_contact"));
         button.setRequestContact(true);
         markup.setKeyboard(List.of(new KeyboardRow(List.of(button))));
         return markup;
