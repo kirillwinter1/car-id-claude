@@ -21,14 +21,18 @@ public class TelegramRenderer {
     }
 
     public void dispatch(SceneOutput output, long chatId, Message editTargetOrNull) {
-        if (output == null || (output.text() == null && output.inlineKeyboard() == null && output.replyKeyboard() == null)) {
+        if (output == null) {
             return;
         }
         if (output.editInPlace() && editTargetOrNull != null) {
             dispatchEdit(output, editTargetOrNull);
-        } else {
-            dispatchSend(output, chatId);
+            return;
         }
+        // no-edit path: nothing to send if there's no text and no keyboard
+        if (output.text() == null && output.inlineKeyboard() == null && output.replyKeyboard() == null) {
+            return;
+        }
+        dispatchSend(output, chatId);
     }
 
     private void dispatchSend(SceneOutput output, long chatId) {
