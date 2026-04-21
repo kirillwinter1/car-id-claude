@@ -66,10 +66,10 @@
 
 | # | Проблема | Приоритет | Ссылка |
 |---|----------|-----------|--------|
-| A1 | **Telegram: циклическая зависимость + `@Setter` на классе** — `TelegramBotService ↔ TelegramLogicService` разрывается через setter-инъекцию в `TelegramConfig`; `@Setter` на уровне класса делает все поля мутируемыми. | 🟠 | [F8](features/F8_TELEGRAM_BOT.md) |
-| A2 | **Telegram: монолитный `onUpdateReceived`** — авторизация + callback-роутинг + switch по текстовым командам в одной функции; новая команда = +case. Сложно тестировать. | 🟠 | [F8](features/F8_TELEGRAM_BOT.md) |
-| A3 | **Telegram: `TelegramBotService` ходит в `NotificationRepository`** — нарушение слоя. Бот должен быть тонким транспортом. | 🟡 | [F8](features/F8_TELEGRAM_BOT.md) |
-| A4 | **Magic strings в Telegram** — `"Неизвестная команда"`, `"QR-коды:"`, `"отметить прочитанным"` и т.п. разбросаны по коду, без централизованных констант/i18n. | 🟡 | [F8](features/F8_TELEGRAM_BOT.md) |
+| A1 | ~~**Telegram: циклическая зависимость + `@Setter` на классе** — `TelegramBotService ↔ TelegramLogicService` разрывается через setter-инъекцию в `TelegramConfig`; `@Setter` на уровне класса делает все поля мутируемыми.~~ **Закрыто 2026-04-21 в Phase 2.1** — выделен `TelegramTransport`-интерфейс, `TelegramRouter` и сцены зависят от него; `@Setter` убран. | 🟠 → ✅ | [F8](features/F8_TELEGRAM_BOT.md) |
+| A2 | ~~**Telegram: монолитный `onUpdateReceived`** — авторизация + callback-роутинг + switch по текстовым командам в одной функции; новая команда = +case. Сложно тестировать.~~ **Закрыто 2026-04-21 в Phase 2.1** — разбит на `TelegramRouter`, `TelegramAuthorizationService`, и сцены (`HomeMenuScene`, `QrListScene`, `TemporaryQrScene`, `NotificationMarkReadScene`). | 🟠 → ✅ | [F8](features/F8_TELEGRAM_BOT.md) |
+| A3 | ~~**Telegram: `TelegramBotService` ходит в `NotificationRepository`** — нарушение слоя. Бот должен быть тонким транспортом.~~ **Закрыто 2026-04-21 в Phase 2.1** — бот больше не импортирует `NotificationRepository`; `NotificationMarkReadScene` использует `NotificationService.shouldShowMarkAsReadButton` и `NotificationFacade.readBy`. | 🟡 → ✅ | [F8](features/F8_TELEGRAM_BOT.md) |
+| A4 | ~~**Magic strings в Telegram** — `"Неизвестная команда"`, `"QR-коды:"`, `"отметить прочитанным"` и т.п. разбросаны по коду, без централизованных констант/i18n.~~ **Закрыто 2026-04-21 в Phase 2.1** — все тексты вынесены в `resources/i18n/telegram_ru.properties` через Spring `MessageSource` + `TelegramMessages` wrapper. | 🟡 → ✅ | [F8](features/F8_TELEGRAM_BOT.md) |
 | A5 | **JdbcTemplate везде** — много boilerplate, ручной маппинг, нет типобезопасности. Для сложных запросов JdbcTemplate оправдан, для CRUD — лучше Spring Data JPA. | 🟡 | — |
 | A6 | **POST для всех endpoints** — не-RESTful, нет HTTP-кэширования. | 🟡 | — |
 | A7 | **Нет API versioning** — нет `/api/v1/...`. Breaking changes сломают клиентов. | 🟡 | — |
@@ -84,6 +84,7 @@
 | A16 | **`UserDtoMapper` ссылается на `telegramChatId`** (unmapped), хотя такого поля в `User` нет — артефакт старой модели. | ⚪ | — |
 | A17 | **`RestTemplate` пересоздаётся в `FirebaseService.send` на каждый вызов** — без пула и таймаутов. | 🟡 | [F7](features/F7_FIREBASE_PUSH.md) |
 | A18 | **Нет ретраев / обработки статусов в `WhatsappBotService`-аналогах** — для любого канала доставки любой сбой = silent fail. | 🟡 | — |
+| A19 | **`TelegramBotService` совмещает `Sender` и `TelegramTransport`** — создаёт самоссылочную DI-зависимость, потребовавшую 3 `@Lazy`-инъекции на сценах/рендерере. Архитектурный smell; кандидат на расщепление (новый `TelegramDispatcher` как отдельный бин-transport, `TelegramBotService` только как entrypoint). | 🟡 | [F8](features/F8_TELEGRAM_BOT.md) |
 
 ---
 
