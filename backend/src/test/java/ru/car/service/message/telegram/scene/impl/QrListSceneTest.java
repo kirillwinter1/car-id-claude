@@ -6,122 +6,89 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
-import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
-import ru.car.enums.BatchTemplates;
-import ru.car.model.Batch;
+import ru.car.enums.QrStatus;
 import ru.car.model.Qr;
-import ru.car.repository.BatchRepository;
 import ru.car.repository.QrRepository;
 import ru.car.service.message.telegram.render.TelegramMessages;
 import ru.car.service.message.telegram.router.CallbackData;
 import ru.car.service.message.telegram.router.TelegramUpdateContext;
 import ru.car.service.message.telegram.scene.SceneOutput;
-import ru.car.service.message.telegram.transport.TelegramTransport;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.Executor;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class QrListSceneTest {
 
     @Mock QrRepository qrRepository;
-    @Mock BatchRepository batchRepository;
-    @Mock TelegramTransport transport;
 
-    private QrListScene scene;
-
-    private final Executor syncExecutor = Runnable::run;
+    QrListScene scene;
 
     @BeforeEach
     void setUp() {
-        TelegramMessages msgs = messages();
-        scene = new QrListScene(qrRepository, batchRepository, transport, syncExecutor, msgs, new HomeMenuScene(msgs));
+        scene = new QrListScene(qrRepository, messages());
     }
 
     @Test
-    void keyIsQr() {
-        assertThat(scene.key()).isEqualTo("qr");
+    void keyIsQrList() {
+        assertThat(scene.key()).isEqualTo("qr_list");
     }
 
     @Test
-    void canHandleText_onlyForQrsButton() {
+    void parentIsHome() {
+        assertThat(scene.parentKey()).isEqualTo("home");
+    }
+
+    @Test
+    void canHandleText_qrCodes() {
         assertThat(scene.canHandleText("QR-коды")).isTrue();
-        assertThat(scene.canHandleText("Временный QR")).isFalse();
+        assertThat(scene.canHandleText("random")).isFalse();
     }
 
     @Test
-    void render_emptyList_returnsEmptyMessage() {
-        when(qrRepository.findByUserId(1L)).thenReturn(List.of());
-        SceneOutput output = scene.render(new TelegramUpdateContext(10L, 1L, null, null));
+    void render_empty_returnsEmptyCardWithOzonButton() {
+        when(qrRepository.findByUserId(42L)).thenReturn(List.of());
 
-        assertThat(output.text()).contains("На текущий момент у Вас нет QR");
-        assertThat(output.inlineKeyboard()).isNull();
-        assertThat(output.replyKeyboard()).isNotNull();  // главное меню прилагается
-    }
+        SceneOutput output = scene.render(new TelegramUpdateContext(100L, 42L, null, null));
 
-    @Test
-    void render_withQrs_returnsListWithInlineButtons() {
-        UUID id = UUID.randomUUID();
-        Qr qr = new Qr();
-        qr.setId(id);
-        qr.setName("Audi");
-        qr.setSeqNumber(123L);
-        when(qrRepository.findByUserId(1L)).thenReturn(List.of(qr));
-
-        SceneOutput output = scene.render(new TelegramUpdateContext(10L, 1L, null, null));
-
-        assertThat(output.text()).isEqualTo("QR-коды:");
+        assertThat(output.text()).contains("Мои метки");
+        assertThat(output.parseMode()).isEqualTo("HTML");
         assertThat(output.inlineKeyboard()).isNotNull();
-        assertThat(output.inlineKeyboard().getKeyboard()).hasSize(1);
-        assertThat(output.inlineKeyboard().getKeyboard().get(0).get(0).getText()).isEqualTo("Audi 123");
-        assertThat(output.inlineKeyboard().getKeyboard().get(0).get(0).getCallbackData()).isEqualTo("qr:pdf:" + id);
     }
 
     @Test
-    void handle_list_returnsEditMarkupWithQrs() {
-        UUID id = UUID.randomUUID();
-        Qr qr = new Qr();
-        qr.setId(id);
-        qr.setName("Audi");
-        qr.setSeqNumber(123L);
-        when(qrRepository.findByUserId(1L)).thenReturn(List.of(qr));
+    void render_withActiveQr_buildsListAndButtons() {
+        UUID id1 = UUID.randomUUID();
+        Qr active = new Qr();
+        active.setId(id1);
+        active.setName("Audi Q5");
+        active.setSeqNumber(145L);
+        active.setStatus(QrStatus.ACTIVE);
+        active.setActivateDate(LocalDateTime.of(2026, 3, 21, 10, 0));
+        active.setCreatedDate(LocalDateTime.of(2026, 3, 21, 10, 0));
+
+        when(qrRepository.findByUserId(42L)).thenReturn(List.of(active));
+
+        SceneOutput output = scene.render(new TelegramUpdateContext(100L, 42L, null, null));
+
+        assertThat(output.text()).contains("Audi Q5").contains("145");
+        // >= 2 rows: 1 qr + back
+        assertThat(output.inlineKeyboard().getKeyboard()).hasSizeGreaterThanOrEqualTo(2);
+    }
+
+    @Test
+    void handle_open_returnsEditInPlace() {
+        when(qrRepository.findByUserId(42L)).thenReturn(List.of());
 
         SceneOutput output = scene.handle(
-                new CallbackData("qr", "list", List.of()),
-                new TelegramUpdateContext(10L, 1L, null, null));
+            new CallbackData("qr_list", "open", List.of()),
+            new TelegramUpdateContext(100L, 42L, null, null));
 
         assertThat(output.editInPlace()).isTrue();
-        assertThat(output.inlineKeyboard()).isNotNull();
-    }
-
-    @Test
-    void handle_pdf_sendsDocument() {
-        UUID id = UUID.randomUUID();
-        Batch batch = new Batch();
-        batch.setTemplate(BatchTemplates.PT_WHITE_1);
-        when(batchRepository.findByQrId(id)).thenReturn(Optional.of(batch));
-
-        SceneOutput output = scene.handle(
-                new CallbackData("qr", "pdf", List.of(id.toString())),
-                new TelegramUpdateContext(10L, 1L, null, null));
-
-        assertThat(output.text()).isNull();
-        verify(transport).sendDocument(any(SendDocument.class));
-    }
-
-    @Test
-    void handle_pdf_invalidUuid_noop() {
-        SceneOutput output = scene.handle(
-                new CallbackData("qr", "pdf", List.of("junk")),
-                new TelegramUpdateContext(10L, 1L, null, null));
-        assertThat(output.text()).isNull();
     }
 
     private static TelegramMessages messages() {
