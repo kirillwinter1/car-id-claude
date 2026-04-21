@@ -1,6 +1,6 @@
 # F8: Telegram-бот (уведомления + команды)
 
-**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-21
+**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-21 (Phase 2.1 рефакторинг)
 
 ## Что делает
 
@@ -23,8 +23,8 @@ Telegram-бот решает две задачи:
 ### Получение уведомления
 
 1. Backend отправил `sendPush` → `TelegramBotService.sendNotification(TextMessage)` через `MessageService.asyncSend`.
-2. Сообщение приходит в чат с inline-кнопкой «отметить прочитанным» (callback = `/notification/{uuid}`).
-3. При клике: `TelegramLogicService` вызывает `NotificationFacade.readBy()` и убирает кнопку.
+2. Сообщение приходит в чат с inline-кнопкой «отметить прочитанным» (callback = `notif:read:<uuid>`).
+3. При клике: `TelegramRouter` → `NotificationMarkReadScene` вызывает `NotificationFacade.readBy()` и убирает кнопку.
 
 ### QR-коды через бота
 
@@ -37,22 +37,22 @@ Telegram-бот решает две задачи:
 
 ### Админ-меню
 
-Пользователи с `user.is_admin = true` видят дополнительные кнопки: `/registerUserCount`, `/activateQrCount`, `/sendNotificationCount`, `/readNotificationCount` — данные из `MonitoringService` за сегодня.
+**Удалено 2026-04-21 в Phase 2.1.** Мониторинг счётчиков (пользователи, активации QR, отправленные/прочитанные уведомления) теперь доступен через Prometheus/Grafana на проде.
 
 ## API / Интеграция
 
 **Telegram Bot API** через `org.telegram.telegrambots` (long polling, `DefaultBotSession`).
 
-**Команды-кнопки** (`TelegramMenu.*_CMD`):
+**Команды-кнопки** (константы в `scene/impl/*` + конфиг i18n):
 
-| Константа | Значение | Кто обрабатывает |
-|-----------|----------|------------------|
-| `QRS_CMD` | "QR-коды" | user / admin menu |
-| `TEMPORARY_QR_CMD` | "Временный QR" | user / admin menu |
-| `QR_CMD` | "/qr/" + UUID | inline callback → PDF |
-| `NOTIFICATION_CMD` | "/notification/" + UUID | inline callback → mark read |
-| `REGISTER_USER_CMD` / `ACTIVATE_QR_CMD` / `SEND_NOTIFICATION_CMD` / `READ_NOTIFICATION_CMD` | `/...Count` | admin menu |
-| `CONTACT_CMD` | "поделиться контактом" | шаг авторизации |
+| Источник | Значение | Где живёт |
+|----------|----------|-----------|
+| reply-кнопка «QR-коды» | `tg.home.btn.qrs` | `HomeMenuScene.mainKeyboard()` |
+| reply-кнопка «Временный QR» | `tg.home.btn.temp_qr` | `HomeMenuScene.mainKeyboard()` |
+| reply-кнопка «поделиться контактом» | `tg.auth.btn.share_contact` | `TelegramAuthorizationService.contactKeyboard()` |
+| callback `qr:list` | — | `QrListScene.ACTION_LIST` |
+| callback `qr:pdf:<uuid>` | — | `QrListScene.ACTION_PDF` |
+| callback `notif:read:<uuid>` | — | `NotificationMarkReadScene.ACTION_READ` |
 
 **Реализация интерфейса `Sender`** — бот участвует в веере каналов доставки через `MessageService.asyncSend` наряду с Firebase и Zvonok.
 
@@ -60,12 +60,17 @@ Telegram-бот решает две задачи:
 
 ## Реализация
 
-**Backend (пакет `ru.car.service.message.telegram`):**
-- `TelegramBotService` — наследует `TelegramLongPollingBot`, реализует `Sender`. Низкоуровневая отправка + бизнес-методы `sendQrs`, `sendQr` (PDF), `sendFeedback`, `editMarkup`.
-- `TelegramLogicService` — маршрутизация `onUpdateReceived`: авторизация → callback-хендлеры → switch по текстовым командам.
-- `TelegramMenu` — статические фабрики `ReplyKeyboardMarkup` (user / admin / contact) + inline-клавиатуры + константы команд.
-- `TelegramConfig` — `@PostConstruct` bootstrap: разрывает циклическую зависимость через setter-инъекцию `TelegramLogicService` в `TelegramBotService`, затем `bot.init()`.
-- `TelegramProperties` — `@ConfigurationProperties("telegram")`: `bot`, `token` (Jasypt), `feedbackChannelId`, `enable`.
+**Backend (пакет `ru.car.service.message.telegram`, после рефакторинга Phase 2.1):**
+- `TelegramBotService` — тонкий транспорт: `extends TelegramLongPollingBot implements Sender, TelegramTransport`. Делегирует входящие `Update` в `TelegramRouter`; исходящие уведомления рендерит через `NotificationMarkReadScene` → `TelegramRenderer`.
+- `TelegramRouter` (пакет `router/`) — entry-point: pre-auth (через `TelegramAuthorizationService`) | callback-роутинг (через `SceneRegistry` по `CallbackData.scene()`) | text-триггеры (через `SceneRegistry` по `canHandleText`).
+- `TelegramAuthorizationService` (пакет `auth/`) — shareContact flow с привязкой `telegram_dialog_id`.
+- `SceneRegistry` (пакет `scene/`) — Spring DI собирает `List<TelegramScene>` и мапит по `key()`.
+- Сцены (пакет `scene/impl/`): `HomeMenuScene` (fallback + reply-клавиатура), `QrListScene`, `TemporaryQrScene`, `NotificationMarkReadScene`.
+- `TelegramRenderer`, `TelegramMessages` (пакет `render/`) — сборка `SendMessage`/`EditMessage` из `SceneOutput` + i18n обёртка над `MessageSource`.
+- `TelegramTransport` (пакет `transport/`) — интерфейс транспорта, реализован `TelegramBotService`.
+- `TelegramConfig` — простой `@PostConstruct` с `bot.init()` (циклическая зависимость устранена, setter-hack удалён).
+- `TelegramProperties` — `@ConfigurationProperties("telegram")`.
+- Тексты — в `backend/src/main/resources/i18n/telegram_ru.properties`.
 
 **БД (таблица `notification_setting`):**
 - `telegram_enabled boolean not null default false` — канал включён.
@@ -77,16 +82,11 @@ Telegram-бот решает две задачи:
 
 ## Ограничения / известный техдолг
 
-- **Циклическая зависимость** `TelegramBotService ↔ TelegramLogicService` разрешается через `@Setter` и ручной bootstrap в `TelegramConfig` — хрупкая конструкция.
-- **`@Setter` на уровне класса** `TelegramBotService` делает мутируемыми все поля, включая репозитории и меню.
-- **Монолитный `onUpdateReceived`** в `TelegramLogicService` — авторизация, callback-логика и switch по командам в одной функции; новая команда = +case в switch, сложно тестировать.
-- **`catch (Exception ignore) {}`** при пометке уведомления прочитанным — глушит ошибки без логирования.
-- **Магические строки** и hardcoded-тексты разбросаны по коду (`"QR-коды:"`, `"Неизвестная команда"`, `"отметить прочитанным"` и т.п.) — нет централизованных констант/i18n.
-- **`TelegramBotService` напрямую ходит в `NotificationRepository`** — нарушение слоя (бот должен быть тонким транспортом).
-- **Тестов на модуль нет.**
-- `JWT без expiration` (общий для проекта) не относится к боту напрямую, но делает авторизацию в боте (через `telegram_dialog_id`) тоже «вечной».
+- **Тестов на `TelegramBotService` напрямую нет** — он тонкий транспорт, покрытие через сцены (интеграционное тестирование бота отложено).
+- **`TelegramBotService` совмещает `Sender` и `TelegramTransport`** — привело к 3 `@Lazy`-инъекциям на сценах/рендерере для разрыва DI-цикла. Кандидат на последующий refactor (см. [TECH_DEBT A19](../TECH_DEBT.md)).
+- **JWT без expiration** (общий для проекта) — авторизация бота тоже «вечная» через `telegram_dialog_id`.
 
-См. план рефакторинга: `review/2026-04-21_TELEGRAM_REFACTORING.md` *(будет создан)*.
+См. историю рефакторинга: [`review/2026-04-21_TG_2.1_ARCHITECTURE.md`](../review/2026-04-21_TG_2.1_ARCHITECTURE.md), план: [`review/2026-04-21_TG_2.1_PLAN.md`](../review/2026-04-21_TG_2.1_PLAN.md).
 
 ## Ссылки
 

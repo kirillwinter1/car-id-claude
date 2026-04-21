@@ -81,6 +81,14 @@ public class NotificationService {
         return NotificationStatus.UNREAD.equals(findByIdOrThrowNotFound(id).getStatus());
     }
 
+    @Transactional(readOnly = true)
+    public boolean shouldShowMarkAsReadButton(UUID id) {
+        NotificationStatus status = notificationRepository.findById(id)
+                .map(Notification::getStatus)
+                .orElse(null);
+        return !NotificationStatus.READ.equals(status);
+    }
+
     @Transactional
     public NotificationDto read(NotificationDto dto, Long userId) {
         Notification notification = findByIdOrThrowNotFound(dto.getNotificationId());

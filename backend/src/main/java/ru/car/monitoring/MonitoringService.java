@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import ru.car.service.security.AuthService;
 
-import java.time.LocalDate;
 import java.util.concurrent.Callable;
 
 @Component
@@ -29,23 +28,5 @@ public class MonitoringService {
         monitoringRepository.save(event, userId);
     }
 
-    @Transactional
-    public int getRegisterCountToday() {
-        return monitoringRepository.findCountByEventAndAfter(Events.REGISTER_USER, LocalDate.now());
-    }
 
-    @Transactional
-    public int getActivateQrCountToday() {
-        return monitoringRepository.findCountByEventAndAfter(Events.ACTIVATE_QR, LocalDate.now());
-    }
-
-    @Transactional
-    public int getSendNotificationCountToday() {
-        return monitoringRepository.findCountByEventAndAfter(Events.SEND_NOTIFICATION, LocalDate.now());
-    }
-
-    @Transactional
-    public int getReadNotificationCountToday() {
-        return monitoringRepository.findCountByEventAndAfter(Events.READ_NOTIFICATION, LocalDate.now());
-    }
 }
