@@ -59,4 +59,22 @@ class CallbackDataTest {
         CallbackData data = new CallbackData("qr", "list", List.of());
         assertThat(data.serialize()).isEqualTo("qr:list");
     }
+
+    @Test
+    void parsesLegacyQrFormat() {
+        Optional<CallbackData> result = CallbackData.parse("/qr/550e8400-e29b-41d4-a716-446655440000");
+        assertThat(result).isPresent();
+        assertThat(result.get().scene()).isEqualTo("qr");
+        assertThat(result.get().action()).isEqualTo("pdf");
+        assertThat(result.get().args()).containsExactly("550e8400-e29b-41d4-a716-446655440000");
+    }
+
+    @Test
+    void parsesLegacyNotificationFormat() {
+        Optional<CallbackData> result = CallbackData.parse("/notification/550e8400-e29b-41d4-a716-446655440000");
+        assertThat(result).isPresent();
+        assertThat(result.get().scene()).isEqualTo("notif");
+        assertThat(result.get().action()).isEqualTo("read");
+        assertThat(result.get().args()).containsExactly("550e8400-e29b-41d4-a716-446655440000");
+    }
 }

@@ -10,6 +10,13 @@ public record CallbackData(String scene, String action, List<String> args) {
         if (raw == null || raw.isBlank()) {
             return Optional.empty();
         }
+        // Legacy formats from pre-2.1 messages still in users' chat histories.
+        if (raw.startsWith("/qr/")) {
+            return Optional.of(new CallbackData("qr", "pdf", List.of(raw.substring("/qr/".length()))));
+        }
+        if (raw.startsWith("/notification/")) {
+            return Optional.of(new CallbackData("notif", "read", List.of(raw.substring("/notification/".length()))));
+        }
         String[] parts = raw.split(":", -1);
         if (parts.length < 2) {
             return Optional.empty();
