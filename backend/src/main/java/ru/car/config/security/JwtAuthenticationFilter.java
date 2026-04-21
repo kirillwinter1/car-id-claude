@@ -1,7 +1,5 @@
 package ru.car.config.security;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -47,20 +45,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         // Обрезаем префикс и получаем имя пользователя из токена
         var jwt = authHeader.substring(BEARER_PREFIX.length());
-        String telephone;
-        Long authId;
-        try {
-            telephone = jwtService.extractTelephone(jwt);
-            authId = jwtService.extractAuthId(jwt);
-        } catch (ExpiredJwtException e) {
-            log.debug("Authorization {} — expired token", uri);
-            filterChain.doFilter(request, response);
-            return;
-        } catch (JwtException | IllegalArgumentException e) {
-            log.debug("Authorization {} — invalid token: {}", uri, e.getMessage());
-            filterChain.doFilter(request, response);
-            return;
-        }
+        var telephone = jwtService.extractTelephone(jwt);
+        var authId = jwtService.extractAuthId(jwt);
 
         log.debug("Authorization {} telephone = {}, authId = {} ", uri, telephone, authId);
         if (StringUtils.isNotEmpty(telephone) && SecurityContextHolder.getContext().getAuthentication() == null) {

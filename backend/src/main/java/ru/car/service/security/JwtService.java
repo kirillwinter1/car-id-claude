@@ -1,7 +1,6 @@
 package ru.car.service.security;
 
 import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -23,9 +22,6 @@ import java.util.function.Function;
 public class JwtService {
     @Value("${token.signing.key}")
     private String jwtSigningKey;
-
-    @Value("${token.signing.expiration-ms:2592000000}")
-    private long expirationMs = 2592000000L;
 
     /**
      * Извлечение имени пользователя из токена
@@ -59,35 +55,24 @@ public class JwtService {
             claims.put("role", customUserDetails.getRole());
             claims.put("authId", customUserDetails.getAuthId());
         }
-        long now = System.currentTimeMillis();
         return Jwts.builder().setClaims(claims)
                 .setSubject(userDetails.getUsername())
-                .setIssuedAt(new Date(now))
-                .setExpiration(new Date(now + expirationMs))
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+//                .setExpiration(new Date(System.currentTimeMillis() + 100000 * 60 * 24))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
     /**
-     * Проверка токена на валидность (принадлежит пользователю и не истёк).
+     * Проверка токена на валидность
      *
-     * Legacy-токены без claim `exp` считаются валидными бессрочно (grandfather
-     * clause), чтобы деплой не требовал массового релогина существующих
-     * пользователей — это стоило бы счёт за flashcall для каждого активного.
-     * Полная инвалидация legacy возможна только через ротацию
-     * `token.signing.key` (dual-key mechanism) — см. TECH_DEBT.md P1.
+     * @param token       токен
+     * @param userDetails данные пользователя
+     * @return true, если токен валиден
      */
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        try {
-            final String telephone = extractTelephone(token);
-            if (!telephone.equals(userDetails.getUsername())) {
-                return false;
-            }
-            Date expiration = extractExpiration(token);
-            return expiration == null || expiration.after(new Date());
-        } catch (JwtException | IllegalArgumentException e) {
-            return false;
-        }
+        final String telephone = extractTelephone(token);
+        return (telephone.equals(userDetails.getUsername())) /*&& !isTokenExpired(token)*/;
     }
 
     /**
@@ -104,10 +89,20 @@ public class JwtService {
     }
 
     /**
-     * Извлечение даты истечения токена (может вернуть null для токенов без claim `exp`).
+     * Проверка токена на просроченность
      *
      * @param token токен
-     * @return дата истечения или null
+     * @return true, если токен просрочен
+     */
+    private boolean isTokenExpired(String token) {
+        return extractExpiration(token).before(new Date());
+    }
+
+    /**
+     * Извлечение даты истечения токена
+     *
+     * @param token токен
+     * @return дата истечения
      */
     private Date extractExpiration(String token) {
         return extractClaim(token, Claims::getExpiration);
@@ -135,5 +130,6 @@ public class JwtService {
     private Key getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSigningKey);
         return Keys.hmacShaKeyFor(keyBytes);
+//        return Keys.hmacShaKeyFor(jwtSigningKey.getBytes(StandardCharsets.UTF_8));
     }
 }
