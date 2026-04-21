@@ -121,7 +121,7 @@ public class QrService {
         }
         qr.setStatus(QrStatus.DELETED);
         qrRepository.delete(qr);
-        notificationRepository.deleteAllByUserId(userId);
+        notificationRepository.deleteByQrId(qr.getId());
         return qrDtoMapper.toDto(qr);
     }
 

@@ -264,8 +264,8 @@ class QrServiceTest extends BaseUnitTest {
     class Delete {
 
         @Test
-        @DisplayName("should delete QR and notifications")
-        void shouldDeleteQrAndNotifications() {
+        @DisplayName("should delete QR and only notifications for that QR (B2)")
+        void shouldDeleteQrAndScopedNotifications() {
             Long userId = 1L;
             UUID qrId = UUID.randomUUID();
             Qr activeQr = QrBuilder.aQr().withId(qrId).asActive(userId).build();
@@ -282,7 +282,10 @@ class QrServiceTest extends BaseUnitTest {
             assertThat(result).isEqualTo(expectedDto);
             assertThat(activeQr.getStatus()).isEqualTo(QrStatus.DELETED);
             verify(qrRepository).delete(activeQr);
-            verify(notificationRepository).deleteAllByUserId(userId);
+            // B2 fix: удаляем только уведомления привязанные к удаляемому QR,
+            // а не все уведомления пользователя.
+            verify(notificationRepository).deleteByQrId(qrId);
+            verify(notificationRepository, never()).deleteAllByUserId(anyLong());
         }
 
         @Test

@@ -33,13 +33,13 @@
 
 | # | Проблема | Приоритет | Ссылка |
 |---|----------|-----------|--------|
-| B1 | **Баг на границе суток** — `LocalDateTime.of(LocalDate.now(), LocalTime.now().minusMinutes(60))` в `NotificationFacade.readBy` и `LocalTime.now().minusSeconds(..)` в `AuthenticationCodeService.isAlreadySent` дают отрицательное время около 00:00. | 🟠 | [F1](features/F1_AUTH.md), [F5](features/F5_NOTIFICATIONS.md) |
-| B2 | **`qr.delete` удаляет ВСЕ уведомления юзера по userId** — должно быть по qrId. | 🟠 | [F2](features/F2_QR_CODES.md) |
+| B1 | ~~Баг на границе суток~~ **Починено 2026-04-21** — `LocalDateTime.now().minusX(...)` в `AuthenticationCodeService.isAlreadySent` и `NotificationFacade.readBy`. | 🟠 → ✅ | [F1](features/F1_AUTH.md), [F5](features/F5_NOTIFICATIONS.md) |
+| B2 | ~~`qr.delete` удаляет ВСЕ уведомления юзера~~ **Починено 2026-04-21** — `notificationRepository.deleteByQrId(qr.getId())` вместо `deleteAllByUserId`. Покрыто unit-тестом в `QrServiceTest`. | 🟠 → ✅ | [F2](features/F2_QR_CODES.md) |
 | B3 | **TTL временного QR: код vs документация** — код удаляет «старше 1 часа», планировщик раз в 2 часа → фактический TTL `[1h, 3h]`. Документация CLAUDE.md/RULES.md говорит 2 часа. | 🟡 | [F3](features/F3_TEMPORARY_QR.md) |
 | B4 | **Rate-limit веба: код vs UI** — в коде `updateDraft`→`SEND` блокируется через 1 минуту (`findByQrIdAndDateAfter(period=1min)`), на `notification.html` фронт пишет «1 раз в час». Либо код, либо текст неправильны. | 🟡 | [F4](features/F4_WEB_REPORT.md) |
 | B5 | **`isValid(visitorId)` не вызывается** — написан в `NotificationService`, но не применяется; любая строка пишется в БД. | 🟡 | [F4](features/F4_WEB_REPORT.md) |
 | B6 | **Нет фонового уборщика DRAFT-уведомлений** — удаляются «лениво» только при попытке `findById`; если никто не читает — висят в БД. | 🟡 | [F4](features/F4_WEB_REPORT.md) |
-| B7 | **Пустые catch-блоки** — `catch (Exception ignore) {}` в `TelegramLogicService` при read-callback; `catch (Exception ignored) {}` в `FirebaseService.sendNotification` per-token. Ошибки глушатся без лога. | 🟠 | [F7](features/F7_FIREBASE_PUSH.md), [F8](features/F8_TELEGRAM_BOT.md) |
+| B7 | ~~Пустые catch-блоки~~ **Починено 2026-04-21** — `TelegramLogicService` и `FirebaseService` теперь логируют исключения через `log.warn(...)`. | 🟠 → ✅ | [F7](features/F7_FIREBASE_PUSH.md), [F8](features/F8_TELEGRAM_BOT.md) |
 | B8 | **Пагинация без явной сортировки** — `PageParam` не содержит `orderBy`; порядок определяется реализацией репозитория, возможны пропуски/дубли на границе страниц. | 🟡 | [F5](features/F5_NOTIFICATIONS.md) |
 | B9 | **Проверка баланса SMS Aero через `.equals(0.00)`** — не ловит 0.01; + `System.out.println("Insufficient balance")` вместо логгера. | 🟡 | [F10](features/F10_SMS.md) |
 | B10 | **`destroyAllTemporaryQr` использует жёсткое `destroy`** — удаление из БД, не soft-delete; ломает аудит. | 🟡 | [F3](features/F3_TEMPORARY_QR.md) |
@@ -56,9 +56,9 @@
 | D2 | `MonitoringBeanPostProcessor` закомментирован (`//@Component`); аннотация `@Monitoring` существует, но не применяется. Решение: активировать BPP или удалить вместе с аннотацией. | 🟡 | [F16](features/F16_METRICS_MONITORING.md) |
 | D3 | `FeedbackChannels.TELEGRAM` — объявлен, не используется (раньше, видимо, feedback принимался из бота). | ⚪ | [F12](features/F12_FEEDBACK.md) |
 | D4 | `/api/report/send` (web без черновика) — дублирует flow `createDraft → updateDraft`. Фронт не использует. | ⚪ | [F4](features/F4_WEB_REPORT.md) |
-| D5 | `FirebaseService.main` — тестовый метод с реальным токеном. Удалить. | 🟠 | [F7](features/F7_FIREBASE_PUSH.md) |
+| D5 | ~~`FirebaseService.main` — тестовый метод с реальным токеном~~ **Удалён 2026-04-21**. | 🟠 → ✅ | [F7](features/F7_FIREBASE_PUSH.md) |
 | D6 | `SmsAeroClient` — 270 строк скопированного клиента, большая часть методов (Viber, ContactList, HlrCheck, GroupAdd и др.) не используется. | 🟡 | [F10](features/F10_SMS.md) |
-| D7 | Закомментированные блоки в `MessageService.sendMail` (email fallback) и `sendFlashcallCode` (резерв для WhatsApp — удалён как класс). | ⚪ | — |
+| D7 | ~~Закомментированные блоки в `MessageService`~~ **Удалены 2026-04-21**. | ⚪ → ✅ | — |
 
 ---
 
@@ -77,7 +77,7 @@
 | A9 | **`batchId = 1L` захардкожен** в `QrService.createQr` / `createTemporaryQr` — механика назначения batch'ей не используется. | 🟡 | [F2](features/F2_QR_CODES.md) |
 | A10 | **`printed` флаг у QR не используется** (только хранится в БД). | ⚪ | [F2](features/F2_QR_CODES.md) |
 | A11 | **Нет permission-check на `qr.create`** — любой авторизованный может создать QR, хотя предполагается админ-онли. | 🟡 | [F2](features/F2_QR_CODES.md) |
-| A12 | **`SmsService.canSendNotification` возвращает `true` всегда** — нарушение контракта `Sender`. | 🟡 | [F10](features/F10_SMS.md) |
+| A12 | ~~`SmsService.canSendNotification` возвращает `true` всегда~~ **Починено 2026-04-21** — теперь `false` с комментарием, защита от случайного включения SMS в веер рассылки. Когда SMS станет реальным каналом уведомлений — заменим на `setting.getSmsEnabled()`. | 🟡 → ✅ | [F10](features/F10_SMS.md) |
 | A13 | **`ReasonDictionary` одномерный** — нет групп/категорий/иконок/i18n; нет soft-delete/`active`; порядок задаётся только `id`. | 🟡 | [F13](features/F13_REASONS.md) |
 | A14 | **`Marketplaces` и `VersionControl` — singleton-row без enforcement** — нет unique/check на «ровно одна строка», `findFirst` берёт «первую попавшуюся»; правильнее держать в конфиге/админке. | 🟡 | [F14](features/F14_MARKETPLACES.md), [F15](features/F15_VERSION_CONTROL.md) |
 | A15 | **`Zvonok` сервис — три разных API (`sendCode` / `sendCodeMessage` / `sendMessage`) в одном классе** — разные возвращаемые типы и семантика ошибок. | 🟡 | [F11](features/F11_ZVONOK.md) |
@@ -93,10 +93,10 @@
 |---|----------|-----------|--------|
 | T1 | **`CarIdApplicationTests.java`** — `@SpringBootTest` и `@Test` **закомментированы** — не стартует. | 🔴 | — |
 | T2 | **`IntegrationTest.java`** (Selenide E2E) — `@Test` **закомментирован**, использует внешний URL. | 🟠 | — |
-| T3 | **Нет unit-тестов на ядро** — `JwtService`, `NotificationService`, `QrService`, `MessageService`, `AuthenticationCodeService`, репозитории. *(Появились заготовки в `backend/src/test/java/ru/car/service/`, `repository/`, `test/` — нужно довести.)* | 🔴 | — |
+| T3 | **Baseline unit-тесты на ядро добавлены 2026-04-21** — `JwtServiceTest`, `NotificationServiceTest`, `QrServiceTest`, `QrRepositoryIntegrationTest` (~2000 LoC, 64 теста). Не покрыто: `MessageService`, `AuthenticationCodeService`, `NotificationSettingService`, `UserService`, каналы доставки — наращиваем по мере работы с этими сервисами. | 🔴 → 🟡 | — |
 | T4 | **Mobile тесты = 0%** — `widget_test.dart` это шаблонный counter-test. | 🟠 | — |
 | T5 | **Frontend тесты отсутствуют.** | 🟡 | — |
-| T6 | **Нет CI-гейта на тесты** — сборка пройдёт даже если тесты падают. | 🔴 | — |
+| T6 | ~~Нет CI-гейта на тесты~~ **Починено 2026-04-21** — `.github/workflows/backend-test.yml` запускает `./gradlew test` на каждый PR и push в main; красный билд блокирует merge. | 🔴 → ✅ | — |
 
 ---
 

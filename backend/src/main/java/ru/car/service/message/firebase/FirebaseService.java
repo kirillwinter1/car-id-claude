@@ -97,7 +97,10 @@ public class FirebaseService implements Sender {
         for (FirebaseToken token : CollectionUtils.emptyIfNull(message.getFirebaseTokens())) {
             try {
                 success |= send(token.getToken(), message.getText());
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                log.warn("FCM send failed for token id={} userId={}: {}",
+                        token.getId(), token.getUserId(), e.getMessage());
+            }
         }
         return success;
     }
@@ -116,18 +119,4 @@ public class FirebaseService implements Sender {
         return "firebase";
     }
 
-    public static void main(String[] args) throws IOException {
-        FirebaseProperties firebaseProperties = new FirebaseProperties();
-        firebaseProperties.setScopeCredentials(List.of("https://www.googleapis.com/auth/firebase.messaging"));
-        firebaseProperties.setSourceCredentials("/firebase/car-id-55917-601a5782f3a2.json");
-        firebaseProperties.setUrl("https://fcm.googleapis.com/v1/projects/car-id-55917/messages:send");
-
-        FirebaseService pushService = new FirebaseService(firebaseProperties, null);
-        pushService.init();
-
-        for (int i = 0; i < 1; i++) {
-            pushService.send("fWvr_XBrTLCXj5BdQZCYla:APA91bEl38L1wcx-Bqv3KdCT2aBv-4eeCzj5Vq1bF3ecdOrylz1pn_T_2G-x6MEKhwwB90yARlCjA0IV5z3u-IUqBDovSZoV7wv_O0n6IiBRGy0-Mu-Kfv2i_t8w6UZeKp10pwy6J01b",
-                    "вам отправлено пуш уведомление от Димы");
-        }
-    }
 }

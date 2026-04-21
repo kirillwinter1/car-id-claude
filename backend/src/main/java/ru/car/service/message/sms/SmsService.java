@@ -60,6 +60,10 @@ public class SmsService implements Sender {
 
     @Override
     public boolean canSendNotification(NotificationSetting setting) {
-        return true;
+        // SMS не используется как канал уведомлений (только резерв для auth).
+        // Возвращаем false, чтобы любой будущий `trySend(smsService, ...)` в
+        // веере рассылки не активировал рассылку SMS по ошибке. Когда SMS
+        // станет настоящим каналом — завести флаг smsEnabled в NotificationSetting.
+        return false;
     }
 }

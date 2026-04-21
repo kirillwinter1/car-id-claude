@@ -9,9 +9,7 @@ import ru.car.model.AuthenticationCode;
 import ru.car.repository.AuthenticationCodeRepository;
 import ru.car.util.MessageUtils;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Slf4j
 @Component
@@ -30,7 +28,7 @@ public class AuthenticationCodeService {
 
     @Transactional
     public boolean isAlreadySent(String phoneNumber) {
-        LocalDateTime date = LocalDateTime.of(LocalDate.now(), LocalTime.now().minusSeconds(ApplicationConstants.SMS_NEXT_REQUEST_TIMEOUT_IN_SEC));
+        LocalDateTime date = LocalDateTime.now().minusSeconds(ApplicationConstants.SMS_NEXT_REQUEST_TIMEOUT_IN_SEC);
         return repository.existsByPhoneNumberAndAfter(phoneNumber, date);
     }
 

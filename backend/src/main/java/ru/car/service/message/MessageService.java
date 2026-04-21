@@ -53,10 +53,6 @@ public class MessageService {
         pushExecutorService.execute(() -> {
             send(telegramBotService.getServiceName(), from, text, telegramBotService::sendFeedback);
         });
-
-//        pushExecutorService.execute(() -> {
-//            send(mailSender.getServiceName(), from, text, mailSender::sendMessage);
-//        });
     }
 
     private static final Random RANDOM = new SecureRandom();

@@ -82,7 +82,9 @@ public class TelegramLogicService {
                 UUID id = UUID.fromString(data.replace(TelegramMenu.NOTIFICATION_CMD, ""));
                 try {
                     notificationFacade.readBy(NotificationDto.builder().notificationId(id).build(), userId);
-                } catch (Exception ignore) {}
+                } catch (Exception e) {
+                    log.warn("Failed to mark notification {} as read for user {}", id, userId, e);
+                }
                 telegramBotService.editMarkup(update.getCallbackQuery().getMessage(), null);
             }
         } else if (update.hasMessage() && update.getMessage().hasText()) {

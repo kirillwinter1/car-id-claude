@@ -8,9 +8,7 @@ import ru.car.enums.NotificationStatus;
 import ru.car.service.message.MessageService;
 import ru.car.service.security.AuthService;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 
 @Component
 @RequiredArgsConstructor
@@ -26,7 +24,7 @@ public class NotificationFacade {
 
     public NotificationDto readBy(NotificationDto dto, Long userId) {
         NotificationDto notification = notificationService.read(dto, userId);
-        LocalDateTime date = LocalDateTime.of(LocalDate.now(), LocalTime.now().minusMinutes(ApplicationConstants.NOTIFICATION_LIVE_TIME_IN_MIN));
+        LocalDateTime date = LocalDateTime.now().minusMinutes(ApplicationConstants.NOTIFICATION_LIVE_TIME_IN_MIN);
         if (notification.getTime().isAfter(date)) {
             messageService.sendReadPush(notification);
         }
