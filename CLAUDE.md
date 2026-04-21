@@ -2,198 +2,116 @@
 
 ## Обзор проекта
 
-Car-ID — сервис QR-меток для автомобилей. Позволяет владельцам получать уведомления о событиях с их авто (парковка, ДТП, и т.д.) через push, SMS, звонок, Telegram или WhatsApp.
+Car-ID — сервис QR-меток для автомобилей. Владелец получает уведомления о событиях с его авто (парковка, ДТП и т.д.) через push, звонок или Telegram. Веб-отправка уведомления анонимна (без регистрации).
 
 **Монорепозиторий:**
 - `backend/` — Spring Boot API (Java 17)
-- `mobile/` — Flutter приложение (iOS/Android)
-- `frontend/` — Статический веб-сайт (HTML/CSS/JS)
+- `mobile/` — Flutter (iOS/Android)
+- `frontend/` — статический сайт (HTML/CSS/JS, vanilla)
 
-## Запуск проекта
+## Документация
+
+**Вся смысловая документация — в [`ai-ru/`](ai-ru/README.md).** Дубли в других местах не плодим.
+
+Минимум, с которого стоит начать:
+
+| Документ | О чём |
+|----------|-------|
+| [ai-ru/README.md](ai-ru/README.md) | Обзор и быстрый старт |
+| [ai-ru/FEATURES.md](ai-ru/FEATURES.md) | Индекс всех фич + ссылки на карточки |
+| [ai-ru/ARCHITECTURE.md](ai-ru/ARCHITECTURE.md) | Карта кода |
+| [ai-ru/RULES.md](ai-ru/RULES.md) | Бизнес-правила + правила разработки |
+| [ai-ru/TECH_DEBT.md](ai-ru/TECH_DEBT.md) | Единый реестр техдолга (security, bugs, dead code, architecture, tests, devops) |
+| [ai-ru/OPERATIONS.md](ai-ru/OPERATIONS.md) | Runbook (структура; чувствительная часть — в приватном `ops.inf` вне git) |
+| [ai-ru/PRODUCT_REVIEW.md](ai-ru/PRODUCT_REVIEW.md) | Продуктовый анализ |
+
+## Запуск
 
 ### Backend (порт 8081)
 
-**Локально (H2 in-memory):**
 ```bash
-cd /Users/kirillreshetov/IdeaProjects/car-id-claude/backend
-./gradlew bootRun
+cd backend
+./gradlew bootRun                                         # H2 in-memory
+./gradlew bootRun --args='--spring.profiles.active=dev'   # dev-профиль
 ```
 
-**С профилем:**
-```bash
-./gradlew bootRun --args='--spring.profiles.active=dev'
-```
-
-### Mobile (Flutter)
+### Mobile
 
 ```bash
-cd /Users/kirillreshetov/IdeaProjects/car-id-claude/mobile
+cd mobile
 flutter pub get
 flutter run
 ```
 
 ### Frontend
 
-Статический сайт, можно открыть локально или поднять сервер:
 ```bash
-cd /Users/kirillreshetov/IdeaProjects/car-id-claude/frontend
-python3 -m http.server 8000
+cd frontend && python3 -m http.server 8000
 ```
 
 ## Сборка и тесты
 
 ```bash
-# Backend
 cd backend && ./gradlew build
 cd backend && ./gradlew test
-
-# Mobile
-cd mobile && flutter test
-cd mobile && flutter build apk --release
-
-# Frontend — нет сборки (vanilla JS)
+cd mobile  && flutter test
+cd mobile  && flutter build apk --release
+# Frontend — сборки нет (vanilla JS)
 ```
 
-## Проверка работоспособности
+## Health
 
 ```bash
 curl http://localhost:8081/actuator/health
+curl http://localhost:8081/actuator/prometheus
 ```
 
 ## Конфигурация
 
-### Backend (.env / application.yml)
+- `backend/src/main/resources/application.yml` — базовый.
+- `backend/src/main/resources/application-dev.yml` — dev (H2, тестовые значения).
+- `backend/src/main/resources/application-prod.yml` — prod (PostgreSQL + Jasypt-шифрование `ENC(...)`).
 
-Файлы конфигурации:
-- `backend/src/main/resources/application.yml` — базовый
-- `backend/src/main/resources/application-dev.yml` — development (H2)
-- `backend/src/main/resources/application-prod.yml` — production (PostgreSQL, encrypted)
+**Важно:**
+- Jasypt-пароль для prod: `changeIt` (задаётся через `JASYPT_ENCRYPTOR_PASSWORD` env или `-Djasypt.encryptor.password`).
+- Секреты SMS Aero сейчас **захардкожены в коде** (`SmsService.java`) — см. [TECH_DEBT S5](ai-ru/TECH_DEBT.md).
 
-**Ключевые переменные (prod зашифрованы через Jasypt):**
-- `spring.datasource.*` — PostgreSQL подключение
-- `telegram.bot`, `telegram.token` — Telegram бот
-- `green-api.*` — WhatsApp интеграция
-- `zvonok.*` — SMS/звонки
-- `firebase.*` — Push уведомления
-- `mail.*` — Email отправка
+**Ключевые properties-блоки:**
+- `spring.datasource.*` — PostgreSQL.
+- `telegram.*` — Telegram-бот и feedback-канал.
+- `firebase.*` — FCM service account.
+- `zvonok.*` — flashcall + voice.
 
-### Mobile (const.dart)
-
+**Mobile (`lib/utils/const.dart`):**
 ```dart
 const MAIN_URL = 'https://car-id.ru';
 const TELEGRAM_BOT_URL = 'https://t.me/car_id_ru_bot';
 ```
 
-## Документация (ai-ru/)
+## Текущая фаза работ
 
-| Документ | Описание |
-|----------|----------|
-| [README.md](ai-ru/README.md) | Обзор проекта и содержание |
-| [ARCHITECTURE.md](ai-ru/ARCHITECTURE.md) | Архитектура: backend, mobile, frontend |
-| [RULES.md](ai-ru/RULES.md) | Бизнес-правила и правила разработки |
-| [TECH_REVIEW.md](ai-ru/TECH_REVIEW.md) | Технический обзор: сильные/слабые стороны, план улучшений |
-| [PRODUCT_REVIEW.md](ai-ru/PRODUCT_REVIEW.md) | Продуктовый анализ: value prop, монетизация, growth |
+**Стабилизация.** Новые фичи сейчас не добавляем. Порядок этапов:
 
-## Структура проекта
+1. Документация (в работе, см. `ai-ru/`).
+2. Точечные фиксы кода (мёртвый код, очевидные баги).
+3. Тесты на ядро.
+4. Код-ревью.
+5. Рефакторинг (начиная с Telegram — см. [TECH_DEBT A1–A4](ai-ru/TECH_DEBT.md)).
+6. **Только после этого** — новые фичи.
 
-```
-car-id-claude/
-├── backend/              # Spring Boot 3.2.3 (Java 17)
-│   ├── src/main/java/ru/car/
-│   │   ├── controller/   # 13 REST контроллеров
-│   │   ├── service/      # Бизнес-логика + интеграции
-│   │   ├── repository/   # JdbcTemplate репозитории
-│   │   ├── model/        # Entity классы
-│   │   └── dto/          # Request/Response DTOs
-│   └── src/main/resources/
-│       ├── application*.yml
-│       └── db/           # Liquibase миграции
-├── mobile/               # Flutter (Dart 3.1+)
-│   ├── lib/
-│   │   ├── controllers/  # GetX контроллеры
-│   │   ├── models/       # Модели данных
-│   │   ├── repository/   # API клиенты
-│   │   ├── screens/      # UI экраны
-│   │   └── utils/        # Утилиты, константы
-│   └── pubspec.yaml
-├── frontend/             # Vanilla HTML/CSS/JS
-│   ├── index.html        # Главная страница
-│   ├── notification.html # Отправка уведомлений
-│   ├── css/
-│   └── js/
-└── ai-ru/                # Документация на русском
-```
+Если обнаруживаешь идею новой функциональности — заводи BF-карточку в [`ai-ru/backlog/`](ai-ru/backlog/), не реализуй.
 
-## Важно
+## Важные особенности
 
-- **Backend использует JdbcTemplate**, не JPA/Hibernate
-- **JWT токены без expiration** — особенность текущей реализации
-- **Миграции через Liquibase** — `backend/src/main/resources/db/`
-- **Jasypt** для шифрования prod конфигов (пароль: "changeIt" для prod)
-
-## Внешние интеграции
-
-| Сервис | Назначение | Конфиг |
-|--------|-----------|--------|
-| **Zvonok** | Flashcall + голосовые звонки | `zvonok.*` |
-| **SMS Aero** | SMS сообщения | в коде |
-| **Firebase** | Push уведомления | `firebase.*` |
-| **Telegram** | Telegram бот | `telegram.*` |
-| **WhatsApp** | Green API | `green-api.*` |
-| **Email** | Jakarta Mail | `mail.*` |
-
-## API Endpoints (основные)
-
-### Аутентификация
-```
-POST /api/user.login_oauth_mobile  — Запросить код (flashcall)
-POST /api/user.login_oauth_code    — Подтвердить код → JWT
-POST /api/user.logout              — Выход
-```
-
-### QR коды
-```
-POST /api/qr.get_all      — Все QR пользователя
-POST /api/qr.create       — Создать QR
-POST /api/qr.link_to_user — Привязать QR к аккаунту
-POST /api/qr.delete       — Удалить QR
-```
-
-### Уведомления
-```
-POST /api/notification.get_all        — Входящие уведомления
-POST /api/notification.mark_as_read   — Отметить прочитанным
-POST /api/report.send                 — Отправить уведомление на QR
-POST /api/report.get_all_reasons      — Справочник причин
-```
-
-## Статусы сущностей
-
-### QR Status
-- `NEW` — создан, не активирован
-- `ACTIVE` — привязан к пользователю
-- `TEMPORARY` — временный (удаляется через 2 часа)
-- `DELETED` — удалён
-
-### Notification Status
-- `DRAFT` — черновик (удаляется через 5 минут)
-- `SEND` — отправлено
-- `UNREAD` — доставлено, не прочитано
-- `READ` — прочитано
-
-## Мониторинг
-
-```bash
-# Health
-curl http://localhost:8081/actuator/health
-
-# Prometheus метрики
-curl http://localhost:8081/actuator/prometheus
-```
+- **Backend на `JdbcTemplate`**, не JPA/Hibernate.
+- **JWT без expiration** — вечные токены (см. [TECH_DEBT S1](ai-ru/TECH_DEBT.md)).
+- **Миграции Liquibase** — новый файл `changelog-N.M.xml` + строка в `master.xml`.
+- **Web-отправка уведомления анонимна** (по `visitor_id`).
+- **Temporary QR TTL** — фактически `[1h, 3h]` (планировщик раз в 2 часа, порог «старше 1 часа»); см. [TECH_DEBT B3](ai-ru/TECH_DEBT.md).
 
 ## Продакшн
 
-- **Домен:** car-id.ru
-- **Backend:** Spring Boot за nginx
-- **База:** PostgreSQL (encrypted connection string)
-- **Профиль:** `prod` с Jasypt шифрованием
+- **Домен:** `car-id.ru`.
+- **Backend:** Spring Boot за nginx, systemd-сервис.
+- **БД:** PostgreSQL (encrypted connection в prod-конфиге).
+- Операционные детали (IP сервера, команды деплоя, SSL-процедура) — в приватном `ops.inf` (вне git, только на машине владельца).

@@ -84,28 +84,6 @@ class NotificationSettingsScreen extends StatelessWidget {
                         // SizedBox(height: SC.s(32)),
 
                         ///
-                        /// Whatsapp
-                        ///
-                        // Row(
-                        //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        //   children: [
-                        //     Text('Уведомления в Whatsapp', style: textStyle),
-                        //     CustomSwitch(
-                        //       value: ctrl.whatsappEnabled,
-                        //       onChanged: (value) {
-                        //         // переключаем свитчер и обновляем UI
-                        //         ctrl.whatsappEnabled = !ctrl.whatsappEnabled;
-                        //         ctrl.update();
-
-                        //         // пытаемся обновить настройки на бэке
-                        //         // в случае неудачи откатываем свитчер
-                        //         ctrl.changeSettings('whatsapp', !value);
-                        //       },
-                        //     ),
-                        //   ],
-                        // ),
-
-                        ///
                         /// Telegram bot
                         ///
                         ctrl.settings?.telegramDialogId == null

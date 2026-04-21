@@ -23,7 +23,6 @@ public enum ErrorCode {
     UNKNOWN_TOKEN("UNKNOWN_TOKEN", "Получен неизвестный токен"),
     SEND_TIMEOUT("SEND_TIMEOUT", "Отправка следующего события возможна через %s сек."),
     TELEGRAM_AUTH_ERROR("TELEGRAM_AUTH_ERROR", "Авторизуйтесь в телеграм боте @%s, нажав кнопку %s или написав свой телефон текстом"),
-    WHATSAPP_AUTH_ERROR("WHATSAPP_AUTH_ERROR", "Указанный телефон не зарегистрирован в сервисе Whatsapp"),
     SMS_ALREADY_SENT("SMS_ALREADY_SENT", "");
 
     private final String code;

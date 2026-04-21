@@ -45,12 +45,6 @@ telegram:
   feedbackChannelId: -1002067117934
   enable: true
 
-green-api:
-  host: https://api.green-api.com
-  hostMedia: https://media.green-api.com
-  instanceId: ${GREEN_API_INSTANCE_ID:1103935562}
-  token: ENC(/3duqvGcsgu6N9l/Rit6ntcpB/csGaONqrImPlzsmVIsk2cCK4XTX3xXdyQB/loamKJ0CL5pLqIt9LLPxSNgASRap5kSHDV6gX21pry1i9gPpbz6OT0tD4pth5JB8Ivh)
-
 firebase:
   url: https://fcm.googleapis.com/v1/projects/car-id-55917/messages:send
   sourceCredentials: /firebase/car-id-55917-601a5782f3a2.json

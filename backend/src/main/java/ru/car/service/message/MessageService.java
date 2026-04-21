@@ -17,7 +17,6 @@ import ru.car.service.message.firebase.FirebaseService;
 import ru.car.service.message.mail.MailSender;
 import ru.car.service.message.sms.SmsService;
 import ru.car.service.message.telegram.TelegramBotService;
-import ru.car.service.message.whatsapp.WhatsappBotService;
 import ru.car.service.message.zvonok.ZvonokService;
 
 import java.security.SecureRandom;
@@ -37,7 +36,6 @@ public class MessageService {
     private final ZvonokService zvonokService;
     private final NotificationSettingRepository notificationSettingRepository;
     private final FirebaseService firebaseService;
-    private final WhatsappBotService whatsappBotService;
     private final UserRepository userRepository;
     private final MailSender mailSender;
     private final ExecutorService pushExecutorService;
@@ -65,16 +63,12 @@ public class MessageService {
 
     public String sendFlashcallCode(String telephone) {
         String code = zvonokService.sendCode(telephone);
-//        zvonokService.sendCodeMessage(telephone, String.format("Код для доступа в %s %s . Еще раз %s .", ApplicationConstants.CAR_ID_TITLE, code, code));
 
-        String whatsappText = String.format("Код для доступа в %s: %s", ApplicationConstants.CAR_ID_TITLE, code);
-//        pushExecutorService.execute(() -> {
-//            send(whatsappBotService.getServiceName(), telephone, whatsappText, whatsappBotService::send);
-//        });
+        String smsText = String.format("Код для доступа в %s: %s", ApplicationConstants.CAR_ID_TITLE, code);
 
         CompletableFuture.runAsync(() -> {
                 if (authenticationCodeService.existsCode(telephone, code)) {
-                    send(smsService.getServiceName(), telephone, whatsappText, smsService::send);
+                    send(smsService.getServiceName(), telephone, smsText, smsService::send);
                 }
             }, CompletableFuture.delayedExecutor(30L, TimeUnit.SECONDS));
 
@@ -90,27 +84,6 @@ public class MessageService {
                     String codeString = String.format("%d %d %d %d", num / 1000, (num % 1000) / 100, (num % 100) / 10, num % 10);
                     zvonokService.sendCodeMessage(telephone, String.format("Код для доступа в %s %s . Еще раз %s .", ApplicationConstants.CAR_ID_TITLE, codeString, codeString));
                 }, pushExecutorService);
-        return code;
-    }
-
-    public String sendWhatsappCallCode(String telephone, String code) {
-        int num = RANDOM.nextInt(9000) + 1000;
-        String codeString = String.format("%d %d %d %d", num / 1000, (num % 1000) / 100, (num % 100) / 10, num % 10);
-
-
-        String finalCode = String.valueOf(num);
-        code = finalCode;
-
-        CompletableFuture
-                .runAsync(() -> {
-                    String whatsappText = String.format("Код для доступа в %s: %d", ApplicationConstants.CAR_ID_TITLE, num);
-                    send(whatsappBotService.getServiceName(), telephone, whatsappText, whatsappBotService::send);
-                }, pushExecutorService)
-                .thenRunAsync(() -> {
-                    if (authenticationCodeService.existsCode(telephone, finalCode)) {
-                        zvonokService.sendCodeMessage(telephone, String.format("Код для доступа в %s %s . Еще раз %s .", ApplicationConstants.CAR_ID_TITLE, codeString, codeString));
-                    }
-                }, CompletableFuture.delayedExecutor(30L, TimeUnit.SECONDS));
         return code;
     }
 
@@ -173,7 +146,6 @@ public class MessageService {
         CompletableFuture<Void> send = CompletableFuture
                 .runAsync(() -> {
                     trySend(firebaseService, message);
-                    trySend(whatsappBotService, message);
                     trySend(telegramBotService, message);
                 }, pushExecutorService);
 

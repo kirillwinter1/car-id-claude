@@ -12,7 +12,6 @@ class NotificationSettingsController extends GetxController {
   static const Map<String, String> paramsNames = {
     'push': 'push_enabled',
     'call': 'call_enabled',
-    'whatsapp': 'whatsapp_enabled',
     'telegram': 'telegram_enabled',
   };
 
@@ -24,7 +23,6 @@ class NotificationSettingsController extends GetxController {
   // фактическое положение свитчеров
   late bool pushEnabled;
   late bool callEnabled;
-  late bool whatsappEnabled;
   late bool telegramEnabled;
 
   @override
@@ -41,7 +39,6 @@ class NotificationSettingsController extends GetxController {
     if (settings != null) {
       pushEnabled = settings!.pushEnabled;
       callEnabled = settings!.callEnabled;
-      whatsappEnabled = settings!.whatsappEnabled;
       telegramEnabled = settings!.telegramEnabled;
       update();
     }

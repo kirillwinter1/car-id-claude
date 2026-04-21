@@ -15,8 +15,12 @@
 |----------|----------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Архитектура: backend, mobile, frontend |
 | [RULES.md](RULES.md) | Бизнес-правила и правила разработки |
+| [FEATURES.md](FEATURES.md) | Индекс всех фич со статусами |
 | [TECH_REVIEW.md](TECH_REVIEW.md) | Технический обзор: сильные/слабые стороны, план улучшений |
 | [PRODUCT_REVIEW.md](PRODUCT_REVIEW.md) | Продуктовый анализ: value prop, монетизация, growth |
+| [features/](features/) | Карточки реализованных фич (F1..FN) |
+| [backlog/](backlog/) | Запланированные фичи (BF1..BFN) |
+| [review/](review/) | Архитектурные ревью и рефакторинги |
 
 ## Основные сценарии использования
 
@@ -25,7 +29,7 @@
 2. Вводит номер телефона → получает код через flashcall
 3. Подтверждает код → авторизован
 4. Сканирует QR-код с наклейки → метка привязана к аккаунту
-5. Настраивает способы уведомления (push, звонок, Telegram, WhatsApp)
+5. Настраивает способы уведомления (push, звонок, Telegram)
 
 ### 2. Отправка уведомления (Web)
 1. Прохожий сканирует QR-код на авто (камера телефона)
@@ -36,7 +40,7 @@
 
 ### 3. Получение уведомления (Mobile)
 1. Push-уведомление на телефон
-2. Опционально: звонок, Telegram, WhatsApp, SMS
+2. Опционально: звонок, Telegram
 3. В приложении — список всех уведомлений (входящие/исходящие)
 
 ## Технологии
@@ -47,13 +51,14 @@
 | Mobile | Flutter (Dart 3.1+), GetX, Firebase |
 | Frontend | HTML5, CSS3, Vanilla JavaScript |
 | Auth | JWT + SMS/Flashcall верификация |
-| Messaging | Firebase FCM, Telegram Bot, WhatsApp (Green API), SMS Aero, Zvonok |
+| Messaging | Firebase FCM, Telegram Bot, SMS Aero (резерв для auth), Zvonok |
 
 ## Быстрый старт
 
 1. Прочитай [RULES.md](RULES.md) — ключевые принципы
 2. Прочитай [ARCHITECTURE.md](ARCHITECTURE.md) — карта кодовой базы
-3. Смотри [../CLAUDE.md](../CLAUDE.md) — инструкции по запуску
+3. Смотри [FEATURES.md](FEATURES.md) — что уже реализовано
+4. Смотри [../CLAUDE.md](../CLAUDE.md) — инструкции по запуску
 
 ## Структура монорепозитория
 

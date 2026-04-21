@@ -19,7 +19,6 @@ public class NotificationSetting {
     private Boolean pushEnabled;
     private Boolean callEnabled;
     private Boolean telegramEnabled;
-    private Boolean whatsappEnabled;
     private Boolean active;
     private Long telegramDialogId;
 }

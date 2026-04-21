@@ -17,8 +17,6 @@ public class NotificationSettingDto {
     private Boolean callEnabled;
     @JsonProperty("telegram_enabled")
     private Boolean telegramEnabled;
-    @JsonProperty("whatsapp_enabled")
-    private Boolean whatsappEnabled;
     private Boolean active;
     @JsonProperty("telegram_dialog_id")
     private Long telegramDialogId;

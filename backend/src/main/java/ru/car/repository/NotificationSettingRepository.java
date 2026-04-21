@@ -21,8 +21,8 @@ public class NotificationSettingRepository {
     private static final String EXISTS_BY_TELEGRAM_DIALOG_ID = "SELECT EXISTS( SELECT 1 FROM notification_settings n WHERE n.telegram_dialog_id = :telegramDialogId )";
     private static final String SELECT_BY_TELEGRAM_DIALOG_ID = "SELECT n.user_id FROM notification_settings n WHERE n.telegram_dialog_id = :telegramDialogId";
     private static final String SELECT_BY_QR_ID = "SELECT n.* FROM notification_settings n left join qrs q on n.user_id = q.user_id WHERE q.id = :qrId";
-    private static final String INSERT_NEW = "INSERT INTO notification_settings (user_id, push_enabled, call_enabled, telegram_enabled, whatsapp_enabled, active) VALUES (:userId, :pushEnabled, :callEnabled, :telegramEnabled, :whatsappEnabled, :active)";
-    private static final String UPDATE_ALL_BY_USER_ID = "UPDATE notification_settings SET push_enabled = :pushEnabled, call_enabled = :callEnabled, telegram_enabled = :telegramEnabled, whatsapp_enabled = :whatsappEnabled, active = :active, telegram_dialog_id = :telegramDialogId WHERE user_id = :userId";
+    private static final String INSERT_NEW = "INSERT INTO notification_settings (user_id, push_enabled, call_enabled, telegram_enabled, active) VALUES (:userId, :pushEnabled, :callEnabled, :telegramEnabled, :active)";
+    private static final String UPDATE_ALL_BY_USER_ID = "UPDATE notification_settings SET push_enabled = :pushEnabled, call_enabled = :callEnabled, telegram_enabled = :telegramEnabled, active = :active, telegram_dialog_id = :telegramDialogId WHERE user_id = :userId";
     private static final String UPDATE_TELEGRAM_DIALOG_ID_BY_USER_ID = "UPDATE notification_settings SET telegram_enabled = true, telegram_dialog_id = :telegramDialogId WHERE user_id = :userId";
 
 

@@ -11,8 +11,6 @@ import ru.car.model.NotificationSetting;
 import ru.car.repository.NotificationSettingRepository;
 import ru.car.service.message.telegram.TelegramMenu;
 import ru.car.service.message.telegram.TelegramProperties;
-import ru.car.service.message.whatsapp.WhatsappBotService;
-import ru.car.service.security.AuthService;
 
 import java.util.Objects;
 
@@ -21,9 +19,7 @@ import java.util.Objects;
 public class NotificationSettingService {
     private final NotificationSettingRepository notificationSettingRepository;
     private final NotificationSettingDtoMapper notificationSettingDtoMapper;
-    private final WhatsappBotService whatsappBotService;
     private final TelegramProperties telegramProperties;
-    private final AuthService authService;
 
     @Transactional
     public NotificationSettingDto get(Long userId) {
@@ -36,7 +32,6 @@ public class NotificationSettingService {
                 .userId(userId)
                 .pushEnabled(true)
                 .callEnabled(false)
-                .whatsappEnabled(false)
                 .telegramEnabled(false)
                 .active(true)
                 .build());
@@ -45,7 +40,6 @@ public class NotificationSettingService {
     @Transactional
     public NotificationSettingDto patch(Long userId, NotificationSettingDto dto) {
         NotificationSetting setting = notificationSettingRepository.findByUserId(userId);
-        checkWhatsappEnabledValue(setting.getWhatsappEnabled(), dto.getWhatsappEnabled());
         checkTelegramEnabledValue(setting.getTelegramEnabled(), dto.getTelegramEnabled(), setting.getTelegramDialogId());
         notificationSettingDtoMapper.updateIgnoreNull(dto, setting);
         setting = notificationSettingRepository.update(setting);
@@ -58,20 +52,10 @@ public class NotificationSettingService {
                 .userId(userId)
                 .pushEnabled(true)
                 .callEnabled(false)
-                .whatsappEnabled(false)
                 .telegramEnabled(false)
                 .active(false)
                 .telegramDialogId(null)
                 .build());
-    }
-
-    private void checkWhatsappEnabledValue(Boolean oldVal, Boolean newVal) {
-        if (Objects.isNull(newVal) || oldVal.equals(newVal)) {
-            return ;
-        }
-        if (newVal && !whatsappBotService.check(authService.getPhoneNumber())) {
-            throw new ForbiddenException(ErrorCode.WHATSAPP_AUTH_ERROR.getDescription(), ErrorCode.WHATSAPP_AUTH_ERROR);
-        }
     }
 
     private void checkTelegramEnabledValue(Boolean oldVal, Boolean newVal, Long telegramDialogId) {
