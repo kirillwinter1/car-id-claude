@@ -12,6 +12,7 @@ import ru.car.repository.NotificationSettingRepository;
 import ru.car.service.UserService;
 import ru.car.service.message.telegram.render.TelegramMessages;
 import ru.car.service.message.telegram.scene.SceneOutput;
+import ru.car.service.message.telegram.scene.impl.HomeMenuScene;
 
 import java.util.Optional;
 
@@ -29,7 +30,8 @@ class TelegramAuthorizationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new TelegramAuthorizationService(userService, settingRepository, messages());
+        TelegramMessages msgs = messages();
+        service = new TelegramAuthorizationService(userService, settingRepository, msgs, new HomeMenuScene(msgs));
     }
 
     @Test
@@ -65,6 +67,7 @@ class TelegramAuthorizationServiceTest {
 
         verify(settingRepository).updateTelegramDialogIdByUserId(42L, 100L);
         assertThat(output.text()).contains("Рады приветствовать");
+        assertThat(output.replyKeyboard()).isNotNull();
     }
 
     @Test

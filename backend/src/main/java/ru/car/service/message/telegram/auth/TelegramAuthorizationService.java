@@ -9,6 +9,7 @@ import ru.car.repository.NotificationSettingRepository;
 import ru.car.service.UserService;
 import ru.car.service.message.telegram.render.TelegramMessages;
 import ru.car.service.message.telegram.scene.SceneOutput;
+import ru.car.service.message.telegram.scene.impl.HomeMenuScene;
 import ru.car.util.MessageUtils;
 
 import java.util.List;
@@ -20,13 +21,16 @@ public class TelegramAuthorizationService {
     private final UserService userService;
     private final NotificationSettingRepository settingRepository;
     private final TelegramMessages messages;
+    private final HomeMenuScene homeMenuScene;
 
     public TelegramAuthorizationService(UserService userService,
                                          NotificationSettingRepository settingRepository,
-                                         TelegramMessages messages) {
+                                         TelegramMessages messages,
+                                         HomeMenuScene homeMenuScene) {
         this.userService = userService;
         this.settingRepository = settingRepository;
         this.messages = messages;
+        this.homeMenuScene = homeMenuScene;
     }
 
     public SceneOutput handle(long chatId, String text) {
@@ -41,7 +45,7 @@ public class TelegramAuthorizationService {
             return SceneOutput.send(messages.get("tg.auth.not_registered"), contactKeyboard());
         }
         settingRepository.updateTelegramDialogIdByUserId(user.get().getId(), chatId);
-        return SceneOutput.send(messages.get("tg.auth.welcome"), null);
+        return SceneOutput.send(messages.get("tg.auth.welcome"), homeMenuScene.mainKeyboard());
     }
 
     private ReplyKeyboardMarkup contactKeyboard() {
