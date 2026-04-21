@@ -69,9 +69,13 @@ public class JwtService {
     }
 
     /**
-     * Проверка токена на валидность (не истёк и принадлежит пользователю).
-     * Токен без claim `exp` считается невалидным — исторические токены без
-     * expiration принудительно требуют перелогина.
+     * Проверка токена на валидность (принадлежит пользователю и не истёк).
+     *
+     * Legacy-токены без claim `exp` считаются валидными бессрочно (grandfather
+     * clause), чтобы деплой не требовал массового релогина существующих
+     * пользователей — это стоило бы счёт за flashcall для каждого активного.
+     * Полная инвалидация legacy возможна только через ротацию
+     * `token.signing.key` (dual-key mechanism) — см. TECH_DEBT.md P1.
      */
     public boolean isTokenValid(String token, UserDetails userDetails) {
         try {
@@ -80,7 +84,7 @@ public class JwtService {
                 return false;
             }
             Date expiration = extractExpiration(token);
-            return expiration != null && expiration.after(new Date());
+            return expiration == null || expiration.after(new Date());
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }

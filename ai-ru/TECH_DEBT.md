@@ -153,7 +153,7 @@
 
 | # | Проблема | Приоритет | Ссылка |
 |---|----------|-----------|--------|
-| P1 | **Все секреты лежат plain text в `/var/www/car_id/application-prod.yml`** на prod-сервере (`token.signing.key` по умолчанию из `${TOKEN_SIGNING_KEY:…}`, PG password, Telegram token, SMS Aero apiKey, admin.code, mail password). Хотя в git репо они через Jasypt `ENC(...)` — **на проде распакованы**. Любой с root-доступом читает всё; JWT можно штамповать произвольно. Ротация + восстановление Jasypt-шифрования на диске. | 🔴 | [OPERATIONS.md](OPERATIONS.md) |
+| P1 | **Все секреты лежат plain text в `/var/www/car_id/application-prod.yml`** на prod-сервере (`token.signing.key` по умолчанию из `${TOKEN_SIGNING_KEY:…}`, PG password, Telegram token, SMS Aero apiKey, admin.code, mail password). Хотя в git репо они через Jasypt `ENC(...)` — **на проде распакованы**. Любой с root-доступом читает всё; JWT можно штамповать произвольно. Ротация + восстановление Jasypt-шифрования на диске. **См. план миграции JWT ниже** (grandfather clause + dual-key, чтобы избежать массового релогина 1830 активных пользователей через flashcall). | 🔴 | [OPERATIONS.md](OPERATIONS.md) |
 | P2 | **Backup был сломан 47 дней** (5 марта — 21 апреля 2026). `backup.sh` ожидал интерактивный ввод пароля, падал с `fe_sendauth: no password supplied`. **Починено 2026-04-21**: добавлен `/root/.pgpass`, ротация переписана на `find -size +0`, 0-байтные файлы вычищены, локальная копия на MacBook через `~/bin/pull-car-id-backups.sh` + launchd. Оригинальный скрипт на проде не в git — закрывается в P3. | 🔴 → ✅ | [OPERATIONS.md](OPERATIONS.md) |
 | P3 | **Deploy-скрипты + systemd unit-ы жили только на проде, не в git** — `backup.sh`, `run.sh`, `health.sh`, `send_message.sh`, `*.service`, `*.timer`. При пересоздании машины были бы потеряны. **Заведено в `deploy/`** с env-параметризацией для публичного репо. Требуется миграция prod на env-driven версию. | 🟠 → 🟡 | [`../deploy/`](../deploy/) |
 | P4 | **`send_message.sh` содержит Telegram bot token в clear-text** на сервере + chat_id админ-канала. На проде-скрипт — хардкод; в `deploy/send_message.sh` перенесено на env vars. Требуется ротация токена (он уже скомпрометирован — я прочитал). | 🟠 | [`../deploy/send_message.sh`](../deploy/send_message.sh) |
@@ -172,11 +172,27 @@
 
 ---
 
+## План миграции JWT (подзадача P1)
+
+Ограничение: **flashcall через Zvonok платный**, 1830 активных пользователей — массовый релогин = значительная сумма. Мобайл **не обрабатывает 401** сегодня — любой 401 = пустые экраны. `version_control` на проде показывает `min=current=1` (force update не настроен). Отсюда — миграция поэтапно, без массовой инвалидации:
+
+1. **JWT `exp` + grandfather** *(сделано в коде, не задеплоено)*. Новые токены — с `exp` (дефолт 30 дней). Legacy-токены (без `exp`) валидны бессрочно. Деплой безопасен — сессия ни у кого не ломается.
+2. **Мобайл 401-handler** — интерцептор GetConnect: при 401 `appController.clearToken()` + `Get.offAllNamed('/auth')`. Выпуск в App Store и RuStore.
+3. **Естественное распространение** обновлённого клиента — 2-4 недели органики.
+4. **Dual-key signing** в backend: два ключа в конфиге (`primary` + `fallback`). Validate = любой из двух, sign = `primary`. Deploy ничего не ломает.
+5. **Ротация ключа**: новый ключ становится `primary`, скомпрометированный уходит в `fallback`. Через X дней `fallback` убираем — все legacy-JWT становятся invalid. Активные пользователи с новым клиентом получают 401 → редирект на Auth → flashcall → новый токен с `exp`.
+6. **Force update** через `version_control.min` — для тех, кто не обновил мобайл, когда доля старых клиентов станет маленькой.
+7. **Refresh token** (отдельный тикет) — долгосрочно: позволит сделать `exp` коротким без учащения flashcall.
+
+**Что можно безопасно делать параллельно** (не касается JWT): P1.b (PG password → `.pgpass` + config), P1.c (Telegram/SMS/admin/mail токены), P1.d (Jasypt-шифрование `application-prod.yml` на диске), Bug-bash (B1, B2, B7), тесты.
+
+---
+
 ## Приоритетный план (roadmap)
 
 ### Фаза «Prod safety» (срочно, в первую очередь)
 
-1. **P1** Ротировать все скомпрометированные секреты (JWT signing key, PG password, Telegram token, SMS Aero key, admin.code, mail password) + вернуть Jasypt-шифрование `application-prod.yml` на диске.
+1. **P1** Ротировать все скомпрометированные секреты (JWT signing key, PG password, Telegram token, SMS Aero key, admin.code, mail password) + вернуть Jasypt-шифрование `application-prod.yml` на диске. **Порядок для JWT — см. план миграции выше.**
 2. **P4** Ротация Telegram alert-token (из `send_message.sh`) и перевод на env vars из `deploy/`.
 3. **P7** Выключить Swagger UI на prod (`springdoc.enabled: false` в prod-конфиге).
 4. **P8** Ограничить `/actuator/*` (basic-auth через nginx или `include: health` + auth).
