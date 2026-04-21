@@ -21,11 +21,12 @@ logger:
     ru.car: DEBUG
 
 springdoc:
-  #  api-docs:
-  #    path: /api-docs
   swagger-ui:
     path: /swagger-ui.html
-  enabled: true
+    enabled: false
+  api-docs:
+    enabled: false
+  enabled: false
 swagger:
   server:
     url: https://car-id.ru
