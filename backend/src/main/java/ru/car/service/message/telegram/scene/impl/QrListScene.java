@@ -3,6 +3,7 @@ package ru.car.service.message.telegram.scene.impl;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
@@ -45,7 +46,7 @@ public class QrListScene implements TelegramScene {
 
     public QrListScene(QrRepository qrRepository,
                        BatchRepository batchRepository,
-                       TelegramTransport transport,
+                       @Lazy TelegramTransport transport,
                        @Qualifier("pushExecutorService") Executor pushExecutor,
                        TelegramMessages messages,
                        HomeMenuScene homeMenuScene) {

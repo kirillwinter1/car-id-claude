@@ -1,5 +1,6 @@
 package ru.car.service.message.telegram.render;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
@@ -15,7 +16,7 @@ public class TelegramRenderer {
 
     private final TelegramTransport transport;
 
-    public TelegramRenderer(TelegramTransport transport) {
+    public TelegramRenderer(@Lazy TelegramTransport transport) {
         this.transport = transport;
     }
 

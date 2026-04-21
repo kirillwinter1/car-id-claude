@@ -1,7 +1,7 @@
 package ru.car.service.message.telegram.scene.impl;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -21,7 +21,6 @@ import java.util.UUID;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class NotificationMarkReadScene implements TelegramScene {
 
     public static final String KEY = "notif";
@@ -30,6 +29,14 @@ public class NotificationMarkReadScene implements TelegramScene {
     private final NotificationFacade notificationFacade;
     private final NotificationService notificationService;
     private final TelegramMessages messages;
+
+    public NotificationMarkReadScene(@Lazy NotificationFacade notificationFacade,
+                                      NotificationService notificationService,
+                                      TelegramMessages messages) {
+        this.notificationFacade = notificationFacade;
+        this.notificationService = notificationService;
+        this.messages = messages;
+    }
 
     @Override
     public String key() {
