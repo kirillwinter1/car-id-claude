@@ -1,0 +1,65 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: CarID-test
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS PUBLIC
+    username: sa
+    password: ''
+    driverClassName: org.h2.Driver
+  liquibase:
+    contexts: local
+    change-log: classpath:db/master.xml
+    enabled: true
+    parameters:
+      schema: public
+
+token:
+  signing:
+    key: dGVzdC1zaWduaW5nLWtleS1mb3ItdW5pdC10ZXN0cy0yNTYtYml0cw==
+
+# Disable external services
+telegram:
+  enable: false
+  bot: test_bot
+  token: test-token
+  feedbackChannelId: 0
+
+firebase:
+  url: https://fcm.googleapis.com/test
+  sourceCredentials: /firebase/test.json
+  scopeCredentials:
+    - https://www.googleapis.com/auth/firebase.messaging
+
+zvonok:
+  urlFlashcall: https://zvonok.com/test/flashcall/
+  urlCall: https://zvonok.com/test/call/
+  flashcallCampaignId: 0
+  codeCallCampaignId: 0
+  callCampaignId: 0
+  publicKeyApi: test-key
+
+mail:
+  receiverMail: test@test.ru
+  senderMail: test@test.ru
+  password: test
+  smtpHost: smtp.test.com
+
+admin:
+  phone: 79001234567
+  code: 1111
+
+jasypt:
+  encryptor:
+    myPassword: test
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    metrics:
+      enabled: false
