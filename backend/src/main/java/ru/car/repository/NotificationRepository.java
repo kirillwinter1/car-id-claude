@@ -106,6 +106,43 @@ public class NotificationRepository {
             " WHERE n.sender_id = :senderId and n.status = :status " +
             " ORDER BY n.created_date DESC " +
             " OFFSET :offset ROWS FETCH NEXT :page_size ROWS ONLY";
+
+    private static final String SELECT_ALL_BY_PAGE_AND_USER_ID_AND_QR_ID = "SELECT n.* , " +
+            " qr.id as \"qr.id\", " +
+            " qr.batch_id as \"qr.batchId\", " +
+            " qr.seq_number as \"qr.seqNumber\", " +
+            " qr.name as \"qr.name\", " +
+            " qr.printed as \"qr.printed\", " +
+            " qr.status as \"qr.status\", " +
+            " qr.created_date as \"qr.createdDate\", " +
+            " qr.user_id as \"qr.userId\", " +
+            " rd.id as \"rd.id\", " +
+            " rd.description as \"rd.description\" " +
+            " FROM notifications as n " +
+            " join qrs qr on n.qr_id = qr.id " +
+            " join reason_dictionary rd on rd.id = n.reason_id " +
+            " WHERE qr.user_id = :userId and n.qr_id = :qrId and n.status != :draft " +
+            " ORDER BY n.status DESC, n.created_date DESC " +
+            " OFFSET :offset ROWS FETCH NEXT :page_size ROWS ONLY";
+
+    private static final String SELECT_ALL_BY_STATUS_AND_USER_ID_AND_QR_ID = "SELECT n.* , " +
+            " qr.id as \"qr.id\", " +
+            " qr.batch_id as \"qr.batchId\", " +
+            " qr.seq_number as \"qr.seqNumber\", " +
+            " qr.name as \"qr.name\", " +
+            " qr.printed as \"qr.printed\", " +
+            " qr.status as \"qr.status\", " +
+            " qr.created_date as \"qr.createdDate\", " +
+            " qr.user_id as \"qr.userId\", " +
+            " rd.id as \"rd.id\", " +
+            " rd.description as \"rd.description\" " +
+            " FROM notifications as n " +
+            " join qrs qr on n.qr_id = qr.id " +
+            " join reason_dictionary rd on rd.id = n.reason_id " +
+            " WHERE qr.user_id = :userId and n.qr_id = :qrId and n.status = :status " +
+            " ORDER BY n.created_date DESC " +
+            " OFFSET :offset ROWS FETCH NEXT :page_size ROWS ONLY";
+
     private static final String SELECT_BY_QR_ID_AND_CREATED_DATE = "SELECT n.* FROM notifications n WHERE n.qr_id = :qrId and n.created_date >= :createdDate";
     private static final String SELECT_COUNT_BY_VISITOR_ID_AND_CREATED_DATE = "SELECT count(n.*) FROM notifications n WHERE n.visitor_id = :visitorId and n.created_date >= :createdDate";
     private static final String UPDATE_STATUS_BY_ID = "UPDATE notifications SET status = :status WHERE id = :id";
@@ -246,6 +283,24 @@ public class NotificationRepository {
                 .addValue("page_size", page.getSize())
                 .addValue("status", status.name());
         return namedParameterJdbcTemplate.query(SELECT_ALL_BY_STATUS_AND_SENDER_ID, param, new NotificationRowMapper());
+    }
+
+    public List<Notification> findPageByUserIdAndQrId(Long userId, UUID qrId, PageParam page) {
+        MapSqlParameterSource param = new MapSqlParameterSource("userId", userId)
+                .addValue("qrId", qrId)
+                .addValue("offset", page.getSize() * page.getPage())
+                .addValue("page_size", page.getSize())
+                .addValue("draft", NotificationStatus.DRAFT.name());
+        return namedParameterJdbcTemplate.query(SELECT_ALL_BY_PAGE_AND_USER_ID_AND_QR_ID, param, new NotificationRowMapper());
+    }
+
+    public List<Notification> findPageByUserIdAndStatusAndQrId(Long userId, NotificationStatus status, UUID qrId, PageParam page) {
+        MapSqlParameterSource param = new MapSqlParameterSource("userId", userId)
+                .addValue("qrId", qrId)
+                .addValue("offset", page.getSize() * page.getPage())
+                .addValue("page_size", page.getSize())
+                .addValue("status", status.name());
+        return namedParameterJdbcTemplate.query(SELECT_ALL_BY_STATUS_AND_USER_ID_AND_QR_ID, param, new NotificationRowMapper());
     }
 
     public boolean deleteById(UUID id) {
