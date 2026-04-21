@@ -1,0 +1,11 @@
+[Unit]
+Description=Run Car-ID healthcheck every 5 seconds
+
+[Timer]
+OnBootSec=5
+OnUnitActiveSec=5
+AccuracySec=1ms
+Unit=health.service
+
+[Install]
+WantedBy=timers.target

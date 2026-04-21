@@ -1,0 +1,14 @@
+[Unit]
+Description=Car-ID healthcheck
+After=syslog.target network.target
+
+[Service]
+User=root
+WorkingDirectory=/var/www/car_id
+EnvironmentFile=-/etc/car_id/health.env
+ExecStart=/bin/bash /var/www/car_id/health.sh
+KillMode=process
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

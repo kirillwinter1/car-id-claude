@@ -147,16 +147,52 @@
 
 ---
 
+## Production / Operations
+
+> Находки при прямом обзоре prod-машины `79.174.94.70` **2026-04-21**. Конкретные значения — в приватном `ops.inf`.
+
+| # | Проблема | Приоритет | Ссылка |
+|---|----------|-----------|--------|
+| P1 | **Все секреты лежат plain text в `/var/www/car_id/application-prod.yml`** на prod-сервере (`token.signing.key` по умолчанию из `${TOKEN_SIGNING_KEY:…}`, PG password, Telegram token, SMS Aero apiKey, admin.code, mail password). Хотя в git репо они через Jasypt `ENC(...)` — **на проде распакованы**. Любой с root-доступом читает всё; JWT можно штамповать произвольно. Ротация + восстановление Jasypt-шифрования на диске. | 🔴 | [OPERATIONS.md](OPERATIONS.md) |
+| P2 | **Backup был сломан 47 дней** (5 марта — 21 апреля 2026). `backup.sh` ожидал интерактивный ввод пароля, падал с `fe_sendauth: no password supplied`. **Починено 2026-04-21**: добавлен `/root/.pgpass`, ротация переписана на `find -size +0`, 0-байтные файлы вычищены, локальная копия на MacBook через `~/bin/pull-car-id-backups.sh` + launchd. Оригинальный скрипт на проде не в git — закрывается в P3. | 🔴 → ✅ | [OPERATIONS.md](OPERATIONS.md) |
+| P3 | **Deploy-скрипты + systemd unit-ы жили только на проде, не в git** — `backup.sh`, `run.sh`, `health.sh`, `send_message.sh`, `*.service`, `*.timer`. При пересоздании машины были бы потеряны. **Заведено в `deploy/`** с env-параметризацией для публичного репо. Требуется миграция prod на env-driven версию. | 🟠 → 🟡 | [`../deploy/`](../deploy/) |
+| P4 | **`send_message.sh` содержит Telegram bot token в clear-text** на сервере + chat_id админ-канала. На проде-скрипт — хардкод; в `deploy/send_message.sh` перенесено на env vars. Требуется ротация токена (он уже скомпрометирован — я прочитал). | 🟠 | [`../deploy/send_message.sh`](../deploy/send_message.sh) |
+| P5 | **`/actuator/health` каждые 5 сек дёргает healthcheck** через `JwtAuthenticationFilter`, который пишет **DEBUG `NotAuthorized ... sessionId = ...`** в лог. В сочетании с `logger.levels.ru.car: DEBUG` на проде — журналы забиваются session-id'ами (утечка). Поднять до INFO, вынести actuator из-под JWT-фильтра. | 🟠 | — |
+| P6 | **`logger.levels.ru.car: DEBUG` на проде.** + synonym: `/actuator/health` publicly accessible из интернета через nginx. Логи содержат debug-сведения. Перевести на INFO. | 🟠 | — |
+| P7 | **Swagger UI открыт публично** (`https://car-id.ru/swagger-ui.html`, `springdoc.enabled: true`). Утечка API surface для атакующего. Выключить на prod (`springdoc.enabled: false`) или закрыть basic-auth в nginx. | 🟠 | — |
+| P8 | **`management.endpoints.web.exposure.include: health,prometheus`** — endpoint'ы без аутентификации. `/actuator/health` содержит `show-details: always` — детали компонентов тоже на публике. `/actuator/prometheus` — метрики без auth. | 🟠 | [TECH_DEBT S8, O5](#) |
+| P9 | **nginx разрешает TLSv1 + TLSv1.1** (`ssl_protocols TLSv1 TLSv1.1 TLSv1.2`). Устаревшие версии уязвимы. Оставить только TLSv1.2 + TLSv1.3. Плюс там же длиннющий список cipher'ов — пора на современный set. | 🟡 | — |
+| P10 | **Backend слушает `*:8081`** (все интерфейсы). Публикация наружу через nginx на 443, но если у провайдера нет firewall — порт достижим в обход nginx без SSL/rate-limit. Перейти на `127.0.0.1:8081` или настроить firewall. | 🟠 | — |
+| P11 | **`car_id.jar` собран 4 ноября 2025**, миграции 1.9–1.17 и наши доработки туда не попали. 5+ месяцев без деплоев. Liquibase в prod БД тоже отстаёт. | 🟡 | — |
+| P12 | **Java runtime на проде = OpenJDK 21, в `build.gradle` = `sourceCompatibility '17'`.** Несогласованность. Либо поднять source/target до 21, либо запускать prod на 17. | 🟡 | — |
+| P13 | **`run.sh` хардкодит `/usr/lib/jvm/jdk-21.0.3/bin/java`** — при минорном обновлении Java версия пропадёт. В `deploy/run.sh` уже через `CAR_ID_JAVA_BIN`. | ⚪ | [`../deploy/run.sh`](../deploy/run.sh) |
+| P14 | **Диск `/` на проде 81% (16/20 GB)**, RAM 86 MB free, swap активен 492 MB. На машине ещё живут Lead Board + CRM + Prometheus/Grafana/Alertmanager. Нужно либо почистить (старые backup'ы Lead Board, логи Docker), либо апгрейдить VM. | 🟠 | — |
+| P15 | **PostgreSQL — удалённый сервер** `79.174.88.176:15965`. Нет health-check'а со стороны приложения; нет connection pool мониторинга в prometheus. | 🟡 | — |
+| P16 | **`health.service` имеет `Description=Backup`** (скопипащено с `backup.service`). В `deploy/systemd/health.service` исправлено на «Car-ID healthcheck». | ⚪ | [`../deploy/systemd/health.service`](../deploy/systemd/health.service) |
+
+---
+
 ## Приоритетный план (roadmap)
+
+### Фаза «Prod safety» (срочно, в первую очередь)
+
+1. **P1** Ротировать все скомпрометированные секреты (JWT signing key, PG password, Telegram token, SMS Aero key, admin.code, mail password) + вернуть Jasypt-шифрование `application-prod.yml` на диске.
+2. **P4** Ротация Telegram alert-token (из `send_message.sh`) и перевод на env vars из `deploy/`.
+3. **P7** Выключить Swagger UI на prod (`springdoc.enabled: false` в prod-конфиге).
+4. **P8** Ограничить `/actuator/*` (basic-auth через nginx или `include: health` + auth).
+5. **P14** Освободить диск / спланировать апгрейд VM (81% заполнения критично).
 
 ### Фаза «Safety net» (perm-quality, must-do)
 
-1. **S1** JWT expiration + refresh token.
-2. **T1–T3, T6** — раскомментировать тесты, довести unit-тесты на ядро, CI-гейт.
-3. **S5** — вынести SMS Aero credentials в конфиг с Jasypt, ротировать.
-4. **S2** — CORS whitelist.
-5. **S4** — rate limiting на login endpoints.
-6. **S7** — защитить Zvonok callbacks (подпись / HMAC).
+6. **S1** JWT expiration + refresh token.
+7. **T1–T3, T6** — раскомментировать тесты, довести unit-тесты на ядро, CI-гейт.
+8. **S5** — вынести SMS Aero credentials в конфиг с Jasypt, ротировать.
+9. **S2** — CORS whitelist.
+10. **S4** — rate limiting на login endpoints.
+11. **S7** — защитить Zvonok callbacks (подпись / HMAC).
+12. **P6** Снизить `logger.levels.ru.car` до INFO на проде.
+13. **P10** Ограничить backend до `127.0.0.1:8081` или firewall-правило.
+14. **P9** Отключить TLSv1/TLSv1.1 в nginx.
 
 ### Фаза «Bug bash»
 

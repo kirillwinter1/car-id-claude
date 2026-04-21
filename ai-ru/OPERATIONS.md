@@ -93,7 +93,12 @@
 
 ---
 
+## Версионируемая часть
+
+Скрипты и systemd-unit-ы (`backup.sh`, `run.sh`, `health.sh`, `send_message.sh`, `*.service`, `*.timer`) — в [`../deploy/`](../deploy/). Это желаемое состояние (env-driven, без секретов); текущая версия на проде пока использует хардкоды (см. [TECH_DEBT P3](TECH_DEBT.md)).
+
 ## Ссылки
 
-- `ops.inf` — приватный файл с конкретикой (IP, пути, процедуры доступа).
-- [TECH_DEBT.md](TECH_DEBT.md) — техдолг, связанный с операционкой (отсутствующий CI для фронта, ручная batch-генерация, и т.п.).
+- [`../deploy/`](../deploy/) — операционные скрипты и systemd units в git.
+- `ops.inf` — приватный файл с конкретикой (IP, значения env vars, процедуры доступа).
+- [TECH_DEBT.md](TECH_DEBT.md) — секция «Production / Operations» содержит все prod-находки (2026-04-21).

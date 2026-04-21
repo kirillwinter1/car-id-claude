@@ -1,0 +1,14 @@
+[Unit]
+Description=Car-ID daily PostgreSQL backup
+After=syslog.target network.target
+
+[Service]
+User=root
+WorkingDirectory=/var/www/car_id
+EnvironmentFile=-/etc/car_id/backup.env
+ExecStart=/bin/bash /var/www/car_id/backup.sh
+KillMode=process
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

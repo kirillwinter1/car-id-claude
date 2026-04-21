@@ -1,0 +1,17 @@
+[Unit]
+Description=car_id_backend
+After=syslog.target network.target
+
+[Service]
+ExecStart=/bin/bash /var/www/car_id/run.sh
+ExecStop=/bin/kill -HUP $MAINPID
+Restart=always
+KillMode=process
+KillSignal=SIGTERM
+WorkingDirectory=/var/www/car_id
+Environment=LOG_PATH=/var/www/car_id
+EnvironmentFile=-/etc/car_id/car_id.env
+PIDFile=/var/www/car_id/car_id.pid
+
+[Install]
+WantedBy=multi-user.target
