@@ -125,6 +125,13 @@ public class QrService {
         return qrDtoMapper.toDto(qr);
     }
 
+    @Transactional
+    public void disable(UUID id) {
+        Qr qr = findByIdOrThrowNotFound(id);
+        qr.setStatus(QrStatus.DELETED);
+        qrRepository.delete(qr);
+    }
+
     @Transactional(readOnly = true)
     public int countByUserId(Long userId) {
         return (int) qrRepository.findByUserId(userId).stream()

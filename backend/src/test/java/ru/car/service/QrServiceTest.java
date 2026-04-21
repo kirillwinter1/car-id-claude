@@ -367,6 +367,39 @@ class QrServiceTest extends BaseUnitTest {
     }
 
     @Nested
+    @DisplayName("disable")
+    class Disable {
+
+        @Test
+        @DisplayName("should set status to DELETED and call qrRepository.delete")
+        void disable_setsStatusDeletedAndSaves() {
+            UUID id = UUID.randomUUID();
+            Qr qr = new Qr();
+            qr.setId(id);
+            qr.setStatus(QrStatus.ACTIVE);
+            when(qrRepository.findById(id)).thenReturn(java.util.Optional.of(qr));
+            when(qrRepository.delete(org.mockito.ArgumentMatchers.any(Qr.class)))
+                    .thenAnswer(inv -> inv.getArgument(0));
+
+            qrService.disable(id);
+
+            org.mockito.ArgumentCaptor<Qr> captor = org.mockito.ArgumentCaptor.forClass(Qr.class);
+            verify(qrRepository).delete(captor.capture());
+            assertThat(captor.getValue().getStatus()).isEqualTo(QrStatus.DELETED);
+        }
+
+        @Test
+        @DisplayName("should throw NotFoundException when QR not found")
+        void disable_throwsNotFound_whenQrMissing() {
+            UUID id = UUID.randomUUID();
+            when(qrRepository.findById(id)).thenReturn(java.util.Optional.empty());
+
+            assertThatThrownBy(() -> qrService.disable(id))
+                    .isInstanceOf(NotFoundException.class);
+        }
+    }
+
+    @Nested
     @DisplayName("countByUserId")
     class CountByUserId {
 
