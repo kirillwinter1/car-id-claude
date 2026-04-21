@@ -204,7 +204,9 @@
 
 ### Фаза «Архитектурный рефакторинг Telegram-бота» (A1–A4)
 
-См. будущий документ `review/2026-04-XX_TELEGRAM_REFACTORING.md`.
+Закрывается в рамках **Phase 2 эпика Telegram-бот** (2026-04-21). См.:
+- Мастер-документ: [review/2026-04-21_TELEGRAM_EPIC.md](review/2026-04-21_TELEGRAM_EPIC.md).
+- Под-спек 2.1: [review/2026-04-21_TG_2.1_ARCHITECTURE.md](review/2026-04-21_TG_2.1_ARCHITECTURE.md) — закрывает A1–A4 preserve-behaviour рефакторингом.
 
 ### Фаза «DevOps»
 
