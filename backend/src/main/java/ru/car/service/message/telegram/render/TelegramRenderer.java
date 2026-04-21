@@ -3,6 +3,7 @@ package ru.car.service.message.telegram.render;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
@@ -24,15 +25,31 @@ public class TelegramRenderer {
         if (output == null) {
             return;
         }
+        if (output.photo() != null) {
+            dispatchPhoto(output, chatId);
+            return;
+        }
         if (output.editInPlace() && editTargetOrNull != null) {
             dispatchEdit(output, editTargetOrNull);
             return;
         }
-        // no-edit path: nothing to send if there's no text and no keyboard
         if (output.text() == null && output.inlineKeyboard() == null && output.replyKeyboard() == null) {
             return;
         }
         dispatchSend(output, chatId);
+    }
+
+    private void dispatchPhoto(SceneOutput output, long chatId) {
+        SendPhoto.SendPhotoBuilder builder = SendPhoto.builder()
+                .chatId(chatId)
+                .photo(output.photo());
+        if (output.caption() != null) {
+            builder.caption(output.caption());
+        }
+        if (output.parseMode() != null) {
+            builder.parseMode(output.parseMode());
+        }
+        transport.sendPhoto(builder.build());
     }
 
     private void dispatchSend(SceneOutput output, long chatId) {
