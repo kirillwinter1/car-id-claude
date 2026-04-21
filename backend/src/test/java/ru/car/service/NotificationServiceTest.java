@@ -507,6 +507,44 @@ class NotificationServiceTest extends BaseUnitTest {
     }
 
     @Nested
+    @DisplayName("shouldShowMarkAsReadButton")
+    class ShouldShowMarkAsReadButton {
+
+        @Test
+        @DisplayName("should return true for UNREAD notification")
+        void shouldShowMarkAsReadButton_returnsTrue_forUnread() {
+            UUID id = UUID.randomUUID();
+            Notification notification = new Notification();
+            notification.setStatus(NotificationStatus.UNREAD);
+            when(notificationRepository.findById(id)).thenReturn(Optional.of(notification));
+
+            assertThat(notificationService.shouldShowMarkAsReadButton(id)).isTrue();
+        }
+
+        @Test
+        @DisplayName("should return false for READ notification")
+        void shouldShowMarkAsReadButton_returnsFalse_forRead() {
+            UUID id = UUID.randomUUID();
+            Notification notification = new Notification();
+            notification.setStatus(NotificationStatus.READ);
+            when(notificationRepository.findById(id)).thenReturn(Optional.of(notification));
+
+            assertThat(notificationService.shouldShowMarkAsReadButton(id)).isFalse();
+        }
+
+        @Test
+        @DisplayName("should return true when notification not found (button shown)")
+        void shouldShowMarkAsReadButton_returnsTrue_whenNotFound() {
+            UUID id = UUID.randomUUID();
+            when(notificationRepository.findById(id)).thenReturn(Optional.empty());
+
+            // Preserves current TelegramBotService.readNotification behavior:
+            // if notification is missing, status=null, null != READ → true (button shown).
+            assertThat(notificationService.shouldShowMarkAsReadButton(id)).isTrue();
+        }
+    }
+
+    @Nested
     @DisplayName("delete")
     class Delete {
 
