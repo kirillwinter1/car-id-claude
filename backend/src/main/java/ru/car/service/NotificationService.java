@@ -222,6 +222,12 @@ public class NotificationService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public int countUnreadByUserId(Long userId) {
+        Integer count = notificationRepository.findCountByUserIdAndStatus(userId, NotificationStatus.UNREAD);
+        return count == null ? 0 : count;
+    }
+
     @Transactional
     public boolean delete(NotificationDto dto) {
         return notificationRepository.deleteById(dto.getNotificationId());

@@ -545,6 +545,19 @@ class NotificationServiceTest extends BaseUnitTest {
     }
 
     @Nested
+    @DisplayName("countUnreadByUserId")
+    class CountUnreadByUserId {
+
+        @Test
+        @DisplayName("should delegate to repository and return count")
+        void countUnreadByUserId_delegatesToRepo() {
+            when(notificationRepository.findCountByUserIdAndStatus(1L, NotificationStatus.UNREAD))
+                    .thenReturn(5);
+            assertThat(notificationService.countUnreadByUserId(1L)).isEqualTo(5);
+        }
+    }
+
+    @Nested
     @DisplayName("delete")
     class Delete {
 

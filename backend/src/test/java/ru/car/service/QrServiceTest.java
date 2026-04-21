@@ -367,6 +367,23 @@ class QrServiceTest extends BaseUnitTest {
     }
 
     @Nested
+    @DisplayName("countByUserId")
+    class CountByUserId {
+
+        @Test
+        @DisplayName("should count all QRs except DELETED")
+        void countByUserId_countsAllExceptDeleted() {
+            Qr active1 = new Qr(); active1.setStatus(QrStatus.ACTIVE);
+            Qr active2 = new Qr(); active2.setStatus(QrStatus.ACTIVE);
+            Qr temp = new Qr(); temp.setStatus(QrStatus.TEMPORARY);
+            Qr deleted = new Qr(); deleted.setStatus(QrStatus.DELETED);
+            when(qrRepository.findByUserId(42L)).thenReturn(java.util.List.of(active1, active2, temp, deleted));
+
+            assertThat(qrService.countByUserId(42L)).isEqualTo(3);
+        }
+    }
+
+    @Nested
     @DisplayName("getAll")
     class GetAll {
 
