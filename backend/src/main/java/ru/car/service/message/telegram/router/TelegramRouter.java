@@ -75,12 +75,28 @@ public class TelegramRouter {
             dispatchUnknown(ctx);
             return;
         }
-        Optional<TelegramScene> scene = sceneRegistry.findByKey(parsed.get().scene());
-        if (scene.isEmpty()) {
+        CallbackData data = parsed.get();
+        Optional<TelegramScene> sceneOpt = sceneRegistry.findByKey(data.scene());
+        if (sceneOpt.isEmpty()) {
             dispatchUnknown(ctx);
             return;
         }
-        SceneOutput output = scene.get().handle(parsed.get(), ctx);
+        TelegramScene scene = sceneOpt.get();
+
+        if ("back".equals(data.action())) {
+            Optional<TelegramScene> parent = sceneRegistry.findByKey(scene.parentKey());
+            if (parent.isPresent()) {
+                SceneOutput parentOutput = parent.get().render(ctx);
+                // force edit-in-place for back navigation even if parent's render returned a fresh send
+                SceneOutput editVersion = new SceneOutput(
+                        parentOutput.text(), parentOutput.inlineKeyboard(), null, true,
+                        parentOutput.parseMode(), null, null);
+                renderer.dispatch(editVersion, ctx.chatId(), ctx.callbackMessage().orElse(null));
+                return;
+            }
+        }
+
+        SceneOutput output = scene.handle(data, ctx);
         Message editTarget = ctx.callbackMessage().orElse(null);
         renderer.dispatch(output, ctx.chatId(), editTarget);
     }

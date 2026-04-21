@@ -25,6 +25,7 @@ import java.util.Optional;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -110,6 +111,23 @@ class TelegramRouterTest {
         router.route(update);
 
         verify(matchedScene).render(any());
+    }
+
+    @Test
+    void routesBackCallback_toParentSceneViaEdit() {
+        Update update = callbackUpdate(100L, "qr_details:back");
+        mockAuthorized(100L, 42L);
+        TelegramScene detailsScene = mock(TelegramScene.class);
+        TelegramScene listScene = mock(TelegramScene.class);
+        when(detailsScene.parentKey()).thenReturn("qr_list");
+        when(sceneRegistry.findByKey("qr_details")).thenReturn(Optional.of(detailsScene));
+        when(sceneRegistry.findByKey("qr_list")).thenReturn(Optional.of(listScene));
+        when(listScene.render(any(TelegramUpdateContext.class))).thenReturn(SceneOutput.sendHtml("list", null));
+
+        router.route(update);
+
+        verify(listScene).render(any(TelegramUpdateContext.class));
+        verify(renderer).dispatch(any(SceneOutput.class), eq(100L), any());
     }
 
     @Test

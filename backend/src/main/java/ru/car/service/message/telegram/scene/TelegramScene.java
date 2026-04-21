@@ -31,4 +31,12 @@ public interface TelegramScene {
     default SceneOutput handle(CallbackData data, TelegramUpdateContext ctx) {
         return SceneOutput.noop();
     }
+
+    /**
+     * Ключ родительской сцены — роутер использует при `<scene>:back` callback.
+     * Default "home" — для большинства сцен back возвращает на главный экран.
+     */
+    default String parentKey() {
+        return "home";
+    }
 }
