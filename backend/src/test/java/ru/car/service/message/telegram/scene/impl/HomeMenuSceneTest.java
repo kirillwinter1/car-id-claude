@@ -14,8 +14,9 @@ class HomeMenuSceneTest {
     private final HomeMenuScene scene = new HomeMenuScene(messages());
 
     @Test
-    void keyIsHome() {
-        assertThat(scene.key()).isEqualTo("home");
+    void keyIsLegacyUnused() {
+        // key changed to avoid SceneRegistry clash with HomeScene; will be deleted in Task 21
+        assertThat(scene.key()).isEqualTo("home_legacy_unused");
     }
 
     @Test

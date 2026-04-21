@@ -25,7 +25,8 @@ public class HomeMenuScene implements TelegramScene {
 
     @Override
     public String key() {
-        return KEY;
+        // KEY kept for reference; returning legacy key so SceneRegistry doesn't clash with HomeScene (Task 21 removes this class)
+        return "home_legacy_unused";
     }
 
     /**
