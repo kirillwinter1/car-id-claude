@@ -34,10 +34,12 @@
 
 ## Рефакторинги / ревью
 
-Планируется:
-- `review/2026-04-XX_TELEGRAM_REFACTORING.md` — рефакторинг Telegram-бота (см. техдолг A1-A4 в [TECH_DEBT.md](TECH_DEBT.md)).
+Активные документы — в [review/](review/).
 
-Активные документы см. [review/](review/).
+Запланированное:
+- [2026-04-21_DOCKERIZATION.md](review/2026-04-21_DOCKERIZATION.md) — перевод Car-ID backend на Docker (связка с P10/P11/P14).
+- `review/YYYY-MM-DD_TELEGRAM_REFACTORING.md` *(будет)* — рефакторинг Telegram-бота (A1–A4 в [TECH_DEBT.md](TECH_DEBT.md)).
+- `review/YYYY-MM-DD_AUTH_REDESIGN.md` *(будет)* — мульти-канальная авторизация (Telegram / MAX / flashcall); в это же окно закрываем P1 (секреты + ротация JWT signing key).
 
 ## Техдолг
 
