@@ -24,6 +24,7 @@ public class NotificationSettingRepository {
     private static final String INSERT_NEW = "INSERT INTO notification_settings (user_id, push_enabled, call_enabled, telegram_enabled, active) VALUES (:userId, :pushEnabled, :callEnabled, :telegramEnabled, :active)";
     private static final String UPDATE_ALL_BY_USER_ID = "UPDATE notification_settings SET push_enabled = :pushEnabled, call_enabled = :callEnabled, telegram_enabled = :telegramEnabled, active = :active, telegram_dialog_id = :telegramDialogId WHERE user_id = :userId";
     private static final String UPDATE_TELEGRAM_DIALOG_ID_BY_USER_ID = "UPDATE notification_settings SET telegram_enabled = true, telegram_dialog_id = :telegramDialogId WHERE user_id = :userId";
+    private static final String CLEAR_TELEGRAM_LINK = "UPDATE notification_settings SET telegram_enabled = false, telegram_dialog_id = NULL WHERE user_id = :userId";
 
 
     private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
@@ -67,5 +68,10 @@ public class NotificationSettingRepository {
     public Long findUserIdByTelegramDialogId(long chatId) {
         MapSqlParameterSource paramSource = new MapSqlParameterSource("telegramDialogId", chatId);
         return namedParameterJdbcTemplate.queryForObject(SELECT_BY_TELEGRAM_DIALOG_ID, paramSource, Long.class);
+    }
+
+    public void clearTelegramLink(Long userId) {
+        MapSqlParameterSource params = new MapSqlParameterSource().addValue("userId", userId);
+        namedParameterJdbcTemplate.update(CLEAR_TELEGRAM_LINK, params);
     }
 }
