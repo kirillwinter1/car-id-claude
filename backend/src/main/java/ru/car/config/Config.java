@@ -11,8 +11,10 @@ import org.jasypt.encryption.pbe.PooledPBEStringEncryptor;
 import org.jasypt.encryption.pbe.config.SimpleStringPBEConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -97,6 +99,17 @@ public class Config {
 //            }
 //        });
 //    }
+
+    // Primary MessageSource — declaring this bean replaces Spring Boot's auto-configured one.
+    @Bean
+    public MessageSource messageSource() {
+        var source = new ReloadableResourceBundleMessageSource();
+        source.setBasename("classpath:i18n/telegram");
+        source.setDefaultEncoding("UTF-8");
+        source.setFallbackToSystemLocale(false);
+        source.setUseCodeAsDefaultMessage(false);
+        return source;
+    }
 
     @Bean("jasyptStringEncryptor")
     public StringEncryptor stringEncryptor(@Value("${jasypt.encryptor.myPassword}") String password) {
