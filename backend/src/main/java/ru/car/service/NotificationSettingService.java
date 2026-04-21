@@ -9,7 +9,6 @@ import ru.car.exception.ForbiddenException;
 import ru.car.mapper.NotificationSettingDtoMapper;
 import ru.car.model.NotificationSetting;
 import ru.car.repository.NotificationSettingRepository;
-import ru.car.service.message.telegram.TelegramMenu;
 import ru.car.service.message.telegram.TelegramProperties;
 
 import java.util.Objects;
@@ -63,7 +62,7 @@ public class NotificationSettingService {
             return ;
         }
         if (newVal && Objects.isNull(telegramDialogId)) {
-            throw new ForbiddenException(ErrorCode.TELEGRAM_AUTH_ERROR.getDescription(), ErrorCode.TELEGRAM_AUTH_ERROR, telegramProperties.getBot(), TelegramMenu.CONTACT_CMD);
+            throw new ForbiddenException(ErrorCode.TELEGRAM_AUTH_ERROR.getDescription(), ErrorCode.TELEGRAM_AUTH_ERROR, telegramProperties.getBot(), "поделиться контактом");
         }
     }
 }
