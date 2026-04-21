@@ -30,7 +30,14 @@
 
 ## Бэклог (BF)
 
-Пока пусто. По мере появления идей — заводятся в [backlog/](backlog/).
+Верхнеуровневый план развития — [ROADMAP.md](ROADMAP.md).
+
+| # | Название | Фаза | Карточка |
+|---|----------|------|----------|
+| BF1 | Telegram-бот с красивым UI | Phase 2 | [BF1](backlog/BF1_TELEGRAM_BOT_UI.md) |
+| BF2 | Мульти-канальная авторизация и уведомления (Telegram / MAX / ...) | Phase 3 | [BF2](backlog/BF2_MULTI_CHANNEL_AUTH.md) |
+| BF3 | Редизайн лендинга car-id.ru | Phase 4 | [BF3](backlog/BF3_LANDING_REDESIGN.md) |
+| BF4 | Аренда машиномест в ЖК (эпик) | Phase 5 | [BF4](backlog/BF4_PARKING_RENTAL_EPIC.md) |
 
 ## Рефакторинги / ревью
 

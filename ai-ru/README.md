@@ -13,10 +13,12 @@
 
 | Документ | Описание |
 |----------|----------|
+| [ROADMAP.md](ROADMAP.md) | Верхнеуровневый план развития: стабилизация → Telegram UI → мульти-каналы → лендинг → парковки в ЖК |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Архитектура: backend, mobile, frontend |
 | [RULES.md](RULES.md) | Бизнес-правила и правила разработки |
-| [FEATURES.md](FEATURES.md) | Индекс всех фич со статусами |
-| [TECH_REVIEW.md](TECH_REVIEW.md) | Технический обзор: сильные/слабые стороны, план улучшений |
+| [FEATURES.md](FEATURES.md) | Индекс реализованных фич + бэклог |
+| [TECH_DEBT.md](TECH_DEBT.md) | Технический долг (единый реестр) |
+| [OPERATIONS.md](OPERATIONS.md) | Операционный runbook |
 | [PRODUCT_REVIEW.md](PRODUCT_REVIEW.md) | Продуктовый анализ: value prop, монетизация, growth |
 | [features/](features/) | Карточки реализованных фич (F1..FN) |
 | [backlog/](backlog/) | Запланированные фичи (BF1..BFN) |
@@ -55,10 +57,11 @@
 
 ## Быстрый старт
 
-1. Прочитай [RULES.md](RULES.md) — ключевые принципы
-2. Прочитай [ARCHITECTURE.md](ARCHITECTURE.md) — карта кодовой базы
-3. Смотри [FEATURES.md](FEATURES.md) — что уже реализовано
-4. Смотри [../CLAUDE.md](../CLAUDE.md) — инструкции по запуску
+1. Прочитай [ROADMAP.md](ROADMAP.md) — куда идём
+2. Прочитай [RULES.md](RULES.md) — ключевые принципы
+3. Прочитай [ARCHITECTURE.md](ARCHITECTURE.md) — карта кодовой базы
+4. Смотри [FEATURES.md](FEATURES.md) — что реализовано и что в бэклоге
+5. Смотри [../CLAUDE.md](../CLAUDE.md) — инструкции по запуску
 
 ## Структура монорепозитория
 
