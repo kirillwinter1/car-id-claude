@@ -66,6 +66,11 @@ class QrDetailsSceneTest {
         assertThat(output.text()).contains("Audi Q5").contains("145");
         assertThat(output.editInPlace()).isTrue();
         assertThat(output.inlineKeyboard()).isNotNull();
+        String callbacks = output.inlineKeyboard().getKeyboard().stream()
+            .flatMap(java.util.List::stream)
+            .map(b -> b.getCallbackData())
+            .reduce("", (a, b) -> a + "|" + b);
+        assertThat(callbacks).contains("report:start:" + id);
     }
 
     @Test

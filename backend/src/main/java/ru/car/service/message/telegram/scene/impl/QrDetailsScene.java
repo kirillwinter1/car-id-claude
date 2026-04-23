@@ -106,6 +106,7 @@ public class QrDetailsScene implements TelegramScene {
         kb.setKeyboard(List.of(
             List.of(btn(messages.get("tg.qr.details.btn.show"), "qr_details:show:" + id)),
             List.of(btn(messages.get("tg.qr.details.btn.history"), "notif_list:open:all:1:qr:" + id)),
+            List.of(btn(messages.get("tg.qr.details.btn.report"), "report:start:" + id)),
             List.of(btn(messages.get("tg.qr.details.btn.disable"), "qr_details:disable:" + id)),
             List.of(
                 btn(messages.get("tg.qr.details.btn.back_to_list"), "qr_details:back"),
