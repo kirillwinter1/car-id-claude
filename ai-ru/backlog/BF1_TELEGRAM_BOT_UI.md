@@ -1,11 +1,13 @@
 # BF1: Telegram-бот как второй клиент приложения
 
-**Статус:** 📋 Planned (Phase 2 в [ROADMAP.md](../ROADMAP.md)) — развёрнут в эпик из 5 под-спеков
-**Последний апдейт:** 2026-04-21
+**Статус:** 🚧 In progress (Phase 2 в [ROADMAP.md](../ROADMAP.md)) — эпик из 5 под-спеков, 2.1 и 2.2 закрыты
+**Последний апдейт:** 2026-04-23
 
 > **⚠️ Скоуп пересмотрен 2026-04-21.** Изначально BF1 = «рефакторинг + HTML/эмодзи». По итогам брейнсторма превращён в эпик: **бот = копия мобильного приложения** (те же экраны, команды, переходы) + канал уведомлений + задел под Phase 5 (парковка). Полный план — в **[review/2026-04-21_TELEGRAM_EPIC.md](../review/2026-04-21_TELEGRAM_EPIC.md)**.
 >
-> **✅ Под-спек 2.1 закрыт 2026-04-21** — архитектура + Scene-скелет + i18n + удаление админ-меню; 20 коммитов, 112 тестов зелёных. См. [review/2026-04-21_TG_2.1_ARCHITECTURE.md](../review/2026-04-21_TG_2.1_ARCHITECTURE.md) и [review/2026-04-21_TG_2.1_PLAN.md](../review/2026-04-21_TG_2.1_PLAN.md). Следующий под-спек — 2.2 (перенос базовых экранов).
+> **✅ Под-спек 2.1 закрыт 2026-04-21** — архитектура + Scene-скелет + i18n + удаление админ-меню. См. [review/2026-04-21_TG_2.1_ARCHITECTURE.md](../review/2026-04-21_TG_2.1_ARCHITECTURE.md) и [review/2026-04-21_TG_2.1_PLAN.md](../review/2026-04-21_TG_2.1_PLAN.md).
+>
+> **✅ Под-спек 2.2 закрыт 2026-04-23** — перенос базовых экранов: `HomeScene` со счётчиками, `QrListScene` v2 (HTML-карточки), `QrDetailsScene` (PNG вместо PDF + disable), `NotificationListScene` (вкладки + пагинация + qr-фильтр), `NotificationSettingsScene` (3 свитча), `ProfileScene` (телефон + выход + удаление), `TemporaryQrScene` v2 (PNG). Edit-in-place навигация через `parentKey()` + `:back`. Auth-welcome → `ReplyKeyboardRemove` + авто-рендер Home. Удалён легаси `HomeMenuScene`. См. [review/2026-04-21_TG_2.2_BASIC_SCREENS.md](../review/2026-04-21_TG_2.2_BASIC_SCREENS.md) и [review/2026-04-21_TG_2.2_PLAN.md](../review/2026-04-21_TG_2.2_PLAN.md). Следующий под-спек — 2.3 (ReportEvent + Support + Marketplace).
 
 ## Что делаем
 

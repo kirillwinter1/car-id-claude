@@ -208,6 +208,7 @@
 Закрывается в рамках **Phase 2 эпика Telegram-бот** (2026-04-21). См.:
 - Мастер-документ: [review/2026-04-21_TELEGRAM_EPIC.md](review/2026-04-21_TELEGRAM_EPIC.md).
 - Под-спек 2.1: [review/2026-04-21_TG_2.1_ARCHITECTURE.md](review/2026-04-21_TG_2.1_ARCHITECTURE.md) — закрывает A1–A4 preserve-behaviour рефакторингом.
+- Под-спек 2.2: [review/2026-04-21_TG_2.2_BASIC_SCREENS.md](review/2026-04-21_TG_2.2_BASIC_SCREENS.md) — перенос базовых экранов (Home / Мои метки / Детали / Уведомления / Настройки / Профиль), HTML+эмодзи, edit-in-place, PNG вместо PDF.
 
 ### Фаза «DevOps»
 
