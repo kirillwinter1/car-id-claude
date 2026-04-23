@@ -13,7 +13,7 @@ import ru.car.service.message.telegram.render.TelegramRenderer;
 import ru.car.service.message.telegram.scene.SceneOutput;
 import ru.car.service.message.telegram.scene.SceneRegistry;
 import ru.car.service.message.telegram.scene.TelegramScene;
-import ru.car.service.message.telegram.scene.impl.HomeMenuScene;
+import ru.car.service.message.telegram.scene.impl.HomeScene;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -26,20 +26,20 @@ public class TelegramRouter {
     private final UserService userService;
     private final SceneRegistry sceneRegistry;
     private final TelegramAuthorizationService authService;
-    private final HomeMenuScene homeMenuScene;
+    private final HomeScene homeScene;
     private final TelegramRenderer renderer;
 
     public TelegramRouter(NotificationSettingRepository settingRepository,
                           UserService userService,
                           SceneRegistry sceneRegistry,
                           TelegramAuthorizationService authService,
-                          HomeMenuScene homeMenuScene,
+                          HomeScene homeScene,
                           TelegramRenderer renderer) {
         this.settingRepository = settingRepository;
         this.userService = userService;
         this.sceneRegistry = sceneRegistry;
         this.authService = authService;
-        this.homeMenuScene = homeMenuScene;
+        this.homeScene = homeScene;
         this.renderer = renderer;
     }
 
@@ -122,7 +122,7 @@ public class TelegramRouter {
     }
 
     private void dispatchUnknown(TelegramUpdateContext ctx) {
-        SceneOutput output = homeMenuScene.renderUnknown(ctx);
+        SceneOutput output = homeScene.renderUnknown(ctx);
         renderer.dispatch(output, ctx.chatId(), null);
     }
 

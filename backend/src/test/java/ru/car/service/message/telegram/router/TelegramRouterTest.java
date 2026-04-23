@@ -18,7 +18,7 @@ import ru.car.service.message.telegram.render.TelegramRenderer;
 import ru.car.service.message.telegram.scene.SceneOutput;
 import ru.car.service.message.telegram.scene.SceneRegistry;
 import ru.car.service.message.telegram.scene.TelegramScene;
-import ru.car.service.message.telegram.scene.impl.HomeMenuScene;
+import ru.car.service.message.telegram.scene.impl.HomeScene;
 
 import java.util.Optional;
 
@@ -38,7 +38,7 @@ class TelegramRouterTest {
     @Mock UserService userService;
     @Mock SceneRegistry sceneRegistry;
     @Mock TelegramAuthorizationService authService;
-    @Mock HomeMenuScene homeMenuScene;
+    @Mock HomeScene homeScene;
     @Mock TelegramRenderer renderer;
     @Mock TelegramScene matchedScene;
 
@@ -46,7 +46,7 @@ class TelegramRouterTest {
 
     @BeforeEach
     void setUp() {
-        router = new TelegramRouter(settingRepository, userService, sceneRegistry, authService, homeMenuScene, renderer);
+        router = new TelegramRouter(settingRepository, userService, sceneRegistry, authService, homeScene, renderer);
     }
 
     @Test
@@ -112,11 +112,11 @@ class TelegramRouterTest {
         Update update = callbackUpdate(100L, "junk:action");
         mockAuthorized(100L, 42L);
         when(sceneRegistry.findByKey("junk")).thenReturn(Optional.empty());
-        when(homeMenuScene.renderUnknown(any())).thenReturn(SceneOutput.send("Неизвестная команда", null));
+        when(homeScene.renderUnknown(any())).thenReturn(SceneOutput.send("Неизвестная команда", null));
 
         router.route(update);
 
-        verify(homeMenuScene).renderUnknown(any());
+        verify(homeScene).renderUnknown(any());
     }
 
     @Test
@@ -153,11 +153,11 @@ class TelegramRouterTest {
         Update update = textUpdate(100L, "random text");
         mockAuthorized(100L, 42L);
         when(sceneRegistry.findByText("random text")).thenReturn(Optional.empty());
-        when(homeMenuScene.renderUnknown(any())).thenReturn(SceneOutput.send("Неизвестная команда", null));
+        when(homeScene.renderUnknown(any())).thenReturn(SceneOutput.send("Неизвестная команда", null));
 
         router.route(update);
 
-        verify(homeMenuScene).renderUnknown(any());
+        verify(homeScene).renderUnknown(any());
     }
 
     private void mockAuthorized(long chatId, long userId) {
