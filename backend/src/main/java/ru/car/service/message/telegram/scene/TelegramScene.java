@@ -5,6 +5,25 @@ import ru.car.service.message.telegram.router.TelegramUpdateContext;
 
 import java.util.List;
 
+/**
+ * Базовый интерфейс для сцен Telegram-бота.
+ *
+ * <p>Новая сцена добавляется как стандартный Spring-компонент:
+ * <pre>{@code
+ * @Component
+ * public class ParkingRentalScene implements TelegramScene {
+ *     public static final String KEY = "parking";
+ *     @Override public String key() { return KEY; }
+ *     @Override public SceneOutput handle(CallbackData data, TelegramUpdateContext ctx) { ... }
+ * }
+ * }</pre>
+ *
+ * <p>{@link SceneRegistry} автоматически подхватывает все бины через Spring DI —
+ * ядро бота (router, renderer, transport) менять не нужно.
+ *
+ * <p>Для многошаговых форм используйте {@code SceneStateRegistry} и переопределяйте
+ * {@link #handleText}. Для back-навигации — переопределяйте {@link #parentKey()}.
+ */
 public interface TelegramScene {
 
     /**

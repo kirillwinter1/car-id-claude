@@ -1,6 +1,6 @@
 # BF1: Telegram-бот как второй клиент приложения
 
-**Статус:** 🚧 In progress (Phase 2 в [ROADMAP.md](../ROADMAP.md)) — эпик из 5 под-спеков, 2.1/2.2/2.3/2.4 закрыты
+**Статус:** ✅ Closed (2026-04-23) — эпик из 5 под-спеков, все 2.1–2.5 замёржены в main.
 **Последний апдейт:** 2026-04-23
 
 > **⚠️ Скоуп пересмотрен 2026-04-21.** Изначально BF1 = «рефакторинг + HTML/эмодзи». По итогам брейнсторма превращён в эпик: **бот = копия мобильного приложения** (те же экраны, команды, переходы) + канал уведомлений + задел под Phase 5 (парковка). Полный план — в **[review/2026-04-21_TELEGRAM_EPIC.md](../review/2026-04-21_TELEGRAM_EPIC.md)**.
@@ -11,7 +11,9 @@
 >
 > **✅ Под-спек 2.3 закрыт 2026-04-23** — user actions: `ReportEventScene` (многошаговая форма выбор QR → причина → текст → отправка через `NotificationFacade.send`), `SupportScene` (одношаговый feedback через `FeedbackFacade.send` с `FeedbackChannels.TELEGRAM`), `MarketplaceScene` (URL-кнопки на Wildberries и Ozon). `SceneStateRegistry` для multi-step форм (in-memory, TTL 5 мин). `TelegramScene.handleText` + роутер обрабатывает pending-text-state. См. [review/2026-04-21_TG_2.3_USER_ACTIONS.md](../review/2026-04-21_TG_2.3_USER_ACTIONS.md) и [review/2026-04-21_TG_2.3_PLAN.md](../review/2026-04-21_TG_2.3_PLAN.md).
 >
-> **✅ Под-спек 2.4 закрыт 2026-04-23** — deep-link онбординг: `TelegramStartTokenService` подписывает `userId:expiresAt` через HMAC-SHA256 (truncated до 80 бит, fits 64-char `/start` payload). `POST /api/telegram.get_start_url` возвращает мобилке `https://t.me/<bot>?start=<token>` (TTL 15 мин). Роутер отсекает префикс `/start `, `TelegramAuthorizationService` верифицирует токен и привязывает `telegram_dialog_id` без shareContact. Мобайл: `WidgetsBindingObserver` авто-рефрешит настройки при возврате, snackbar «✅ Telegram подключён». Fallback на shareContact остаётся для пришедших в бота напрямую. См. [review/2026-04-21_TG_2.4_DEEP_LINK.md](../review/2026-04-21_TG_2.4_DEEP_LINK.md) и [review/2026-04-21_TG_2.4_PLAN.md](../review/2026-04-21_TG_2.4_PLAN.md). Следующий под-спек — 2.5 (notification card rendering + reason emoji).
+> **✅ Под-спек 2.4 закрыт 2026-04-23** — deep-link онбординг: `TelegramStartTokenService` подписывает `userId:expiresAt` через HMAC-SHA256 (truncated до 80 бит, fits 64-char `/start` payload). `POST /api/telegram.get_start_url` возвращает мобилке `https://t.me/<bot>?start=<token>` (TTL 15 мин). Роутер отсекает префикс `/start `, `TelegramAuthorizationService` верифицирует токен и привязывает `telegram_dialog_id` без shareContact. Мобайл: `WidgetsBindingObserver` авто-рефрешит настройки при возврате, snackbar «✅ Telegram подключён». Fallback на shareContact остаётся для пришедших в бота напрямую. См. [review/2026-04-21_TG_2.4_DEEP_LINK.md](../review/2026-04-21_TG_2.4_DEEP_LINK.md) и [review/2026-04-21_TG_2.4_PLAN.md](../review/2026-04-21_TG_2.4_PLAN.md).
+>
+> **✅ Под-спек 2.5 закрыт 2026-04-23, эпик завершён** — notification card: `NotificationMarkReadScene.renderNotification` строит HTML-карточку с эмодзи-по-reason (i18n-маппинг `tg.reason.emoji.<id>` для 8 reasons + fallback 🚗), именем метки + seqNumber, описанием причины, пользовательским текстом в кавычках-ёлочках, временем. Две кнопки: «✓ Отметить прочитанным» и «🚘 К метке» (→ `qr_details:open:<qrId>`). Финализация архитектуры: `HomeScene.KEY` константа вместо литерала, Javadoc в `TelegramScene` с примером добавления новой сцены под Phase 5. См. [review/2026-04-21_TG_2.5_NOTIFICATION_CARD.md](../review/2026-04-21_TG_2.5_NOTIFICATION_CARD.md) и [review/2026-04-21_TG_2.5_PLAN.md](../review/2026-04-21_TG_2.5_PLAN.md).
 
 ## Что делаем
 
