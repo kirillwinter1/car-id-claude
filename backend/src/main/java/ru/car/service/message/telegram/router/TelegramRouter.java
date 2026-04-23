@@ -54,6 +54,15 @@ public class TelegramRouter {
             String text = extractAuthText(update);
             SceneOutput output = authService.handle(chatId, text);
             renderer.dispatch(output, chatId, null);
+            if (settingRepository.existsByTelegramDialogId(chatId)) {
+                Long newUserId = settingRepository.findUserIdByTelegramDialogId(chatId);
+                User newUser = userService.getUserOrThrowNotFound(newUserId);
+                TelegramUpdateContext homeCtx = new TelegramUpdateContext(chatId, newUserId, newUser, update);
+                sceneRegistry.findByKey("home").ifPresent(home -> {
+                    SceneOutput homeOutput = home.render(homeCtx);
+                    renderer.dispatch(homeOutput, chatId, null);
+                });
+            }
             return;
         }
 

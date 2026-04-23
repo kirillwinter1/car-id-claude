@@ -2,6 +2,7 @@ package ru.car.service.message.telegram.auth;
 
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
 import ru.car.model.User;
@@ -9,7 +10,6 @@ import ru.car.repository.NotificationSettingRepository;
 import ru.car.service.UserService;
 import ru.car.service.message.telegram.render.TelegramMessages;
 import ru.car.service.message.telegram.scene.SceneOutput;
-import ru.car.service.message.telegram.scene.impl.HomeMenuScene;
 import ru.car.util.MessageUtils;
 
 import java.util.List;
@@ -21,16 +21,13 @@ public class TelegramAuthorizationService {
     private final UserService userService;
     private final NotificationSettingRepository settingRepository;
     private final TelegramMessages messages;
-    private final HomeMenuScene homeMenuScene;
 
     public TelegramAuthorizationService(UserService userService,
                                          NotificationSettingRepository settingRepository,
-                                         TelegramMessages messages,
-                                         HomeMenuScene homeMenuScene) {
+                                         TelegramMessages messages) {
         this.userService = userService;
         this.settingRepository = settingRepository;
         this.messages = messages;
-        this.homeMenuScene = homeMenuScene;
     }
 
     public SceneOutput handle(long chatId, String text) {
@@ -45,7 +42,9 @@ public class TelegramAuthorizationService {
             return SceneOutput.send(messages.get("tg.auth.not_registered"), contactKeyboard());
         }
         settingRepository.updateTelegramDialogIdByUserId(user.get().getId(), chatId);
-        return SceneOutput.send(messages.get("tg.auth.welcome"), homeMenuScene.mainKeyboard());
+        ReplyKeyboardRemove remove = ReplyKeyboardRemove.builder()
+            .removeKeyboard(true).build();
+        return SceneOutput.send(messages.get("tg.auth.welcome"), remove);
     }
 
     private ReplyKeyboardMarkup contactKeyboard() {

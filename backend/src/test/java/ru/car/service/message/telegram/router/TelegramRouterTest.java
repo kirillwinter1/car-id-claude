@@ -27,6 +27,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -74,6 +75,23 @@ class TelegramRouterTest {
         router.route(update);
 
         verify(authService).handle(100L, "+79001234567");
+    }
+
+    @Test
+    void afterSuccessfulAuth_rendersHomeSceneAsSecondMessage() {
+        Update update = contactUpdate(100L, "+79001234567");
+        when(settingRepository.existsByTelegramDialogId(100L)).thenReturn(false, true);
+        when(authService.handle(100L, "+79001234567")).thenReturn(SceneOutput.send("welcome", null));
+        when(settingRepository.findUserIdByTelegramDialogId(100L)).thenReturn(42L);
+        when(userService.getUserOrThrowNotFound(42L)).thenReturn(new User());
+        TelegramScene homeScene = mock(TelegramScene.class);
+        when(sceneRegistry.findByKey("home")).thenReturn(Optional.of(homeScene));
+        when(homeScene.render(any())).thenReturn(SceneOutput.sendHtml("home", null));
+
+        router.route(update);
+
+        verify(homeScene).render(any());
+        verify(renderer, times(2)).dispatch(any(SceneOutput.class), eq(100L), any());
     }
 
     @Test
