@@ -29,7 +29,7 @@ class TemporaryQrSceneTest {
     @BeforeEach
     void setUp() {
         TelegramMessages msgs = messages();
-        scene = new TemporaryQrScene(qrService, msgs, new HomeMenuScene(msgs));
+        scene = new TemporaryQrScene(qrService, msgs);
         ReflectionTestUtils.setField(scene, "url", "https://car-id.ru");
     }
 
@@ -46,16 +46,14 @@ class TemporaryQrSceneTest {
     }
 
     @Test
-    void renderSuccess_buildsCreatedMessage() {
+    void renderSuccess_returnsPhotoWithCaption() {
         UUID qrId = UUID.randomUUID();
         when(qrService.createTemporaryQr(1L)).thenReturn(QrDto.builder().qrId(qrId).build());
 
         SceneOutput output = scene.render(new TelegramUpdateContext(10L, 1L, null, null));
 
-        assertThat(output.text())
-                .contains(qrId.toString())
-                .contains("https://car-id.ru/qr/" + qrId);
-        assertThat(output.replyKeyboard()).isNotNull();  // главное меню остаётся внизу
+        assertThat(output.photo()).isNotNull();
+        assertThat(output.caption()).contains("https://car-id.ru/qr/" + qrId);
     }
 
     @Test
@@ -64,6 +62,7 @@ class TemporaryQrSceneTest {
 
         SceneOutput output = scene.render(new TelegramUpdateContext(10L, 1L, null, null));
         assertThat(output.text()).isEqualTo("Превышен лимит");
+        assertThat(output.photo()).isNull();
     }
 
     @Test
