@@ -298,4 +298,33 @@ class NotificationsRepository extends GetConnect {
 
     return null;
   }
+
+  ///
+  /// Phase 2.4: получает одноразовую deep-link для привязки Telegram-бота.
+  /// Ответ: { url: "https://t.me/<bot>?start=<signed_token>" } с TTL 15 минут.
+  ///
+  Future<String?> getTelegramStartUrl() async {
+    var body = {
+      "method": "telegram.get_start_url",
+      "params": {},
+    };
+
+    try {
+      final Response response = await post(MAIN_URL, body,
+          headers: {"Authorization": "Bearer ${appController.token}"});
+
+      if (response.statusCode == 200) {
+        final Map body = response.body;
+        if (body['result'] == 'true' &&
+            body['params'] is Map &&
+            body['params']['url'] is String) {
+          return body['params']['url'] as String;
+        }
+      }
+    } catch (error) {
+      print('telegram.get_start_url error: $error');
+    }
+
+    return null;
+  }
 }

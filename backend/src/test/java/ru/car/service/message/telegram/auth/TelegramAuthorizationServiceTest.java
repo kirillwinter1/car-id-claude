@@ -14,6 +14,8 @@ import ru.car.service.UserService;
 import ru.car.service.message.telegram.render.TelegramMessages;
 import ru.car.service.message.telegram.scene.SceneOutput;
 
+import static org.mockito.ArgumentMatchers.anyString;
+
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,12 +27,13 @@ class TelegramAuthorizationServiceTest {
 
     @Mock UserService userService;
     @Mock NotificationSettingRepository settingRepository;
+    @Mock TelegramStartTokenService startTokenService;
 
     private TelegramAuthorizationService service;
 
     @BeforeEach
     void setUp() {
-        service = new TelegramAuthorizationService(userService, settingRepository, messages());
+        service = new TelegramAuthorizationService(userService, settingRepository, messages(), startTokenService);
     }
 
     @Test
@@ -77,6 +80,42 @@ class TelegramAuthorizationServiceTest {
         SceneOutput output = service.handle(100L, "+79001234567");
 
         assertThat(output.text()).contains("Скачайте мобильное приложение");
+    }
+
+    @Test
+    void validStartToken_bindsWithoutContact() {
+        User user = new User();
+        user.setId(42L);
+        when(settingRepository.existsByTelegramDialogId(100L)).thenReturn(false);
+        when(startTokenService.verify("valid_token")).thenReturn(Optional.of(42L));
+        when(userService.findById(42L)).thenReturn(Optional.of(user));
+
+        SceneOutput output = service.handle(100L, "valid_token");
+
+        verify(settingRepository).updateTelegramDialogIdByUserId(42L, 100L);
+        assertThat(output.text()).contains("Готово");
+        assertThat(output.replyKeyboard()).isInstanceOf(ReplyKeyboardRemove.class);
+    }
+
+    @Test
+    void expiredStartToken_fallsBackToContactFlow() {
+        when(settingRepository.existsByTelegramDialogId(100L)).thenReturn(false);
+        when(startTokenService.verify("expired_token")).thenReturn(Optional.empty());
+
+        SceneOutput output = service.handle(100L, "expired_token");
+
+        assertThat(output.text()).contains("Введите телефон");
+    }
+
+    @Test
+    void validTokenButUserMissing_rendersNotFoundMessage() {
+        when(settingRepository.existsByTelegramDialogId(100L)).thenReturn(false);
+        when(startTokenService.verify("orphan_token")).thenReturn(Optional.of(999L));
+        when(userService.findById(999L)).thenReturn(Optional.empty());
+
+        SceneOutput output = service.handle(100L, "orphan_token");
+
+        assertThat(output.text()).contains("не найден");
     }
 
     private static TelegramMessages messages() {

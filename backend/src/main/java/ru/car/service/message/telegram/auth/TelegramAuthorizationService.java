@@ -21,21 +21,37 @@ public class TelegramAuthorizationService {
     private final UserService userService;
     private final NotificationSettingRepository settingRepository;
     private final TelegramMessages messages;
+    private final TelegramStartTokenService startTokenService;
 
     public TelegramAuthorizationService(UserService userService,
                                          NotificationSettingRepository settingRepository,
-                                         TelegramMessages messages) {
+                                         TelegramMessages messages,
+                                         TelegramStartTokenService startTokenService) {
         this.userService = userService;
         this.settingRepository = settingRepository;
         this.messages = messages;
+        this.startTokenService = startTokenService;
     }
 
     public SceneOutput handle(long chatId, String text) {
-        if (!MessageUtils.isValidPhone(text)) {
-            return SceneOutput.send(messages.get("tg.auth.request_contact"), contactKeyboard());
-        }
         if (settingRepository.existsByTelegramDialogId(chatId)) {
             return SceneOutput.send(messages.get("tg.auth.already_linked"), contactKeyboard());
+        }
+        if (text != null && !text.isBlank() && !MessageUtils.isValidPhone(text)) {
+            Optional<Long> userIdOpt = startTokenService.verify(text);
+            if (userIdOpt.isPresent()) {
+                Optional<User> user = userService.findById(userIdOpt.get());
+                if (user.isPresent()) {
+                    settingRepository.updateTelegramDialogIdByUserId(user.get().getId(), chatId);
+                    ReplyKeyboardRemove remove = ReplyKeyboardRemove.builder()
+                        .removeKeyboard(true).build();
+                    return SceneOutput.send(messages.get("tg.auth.welcome_deep_link"), remove);
+                }
+                return SceneOutput.send(messages.get("tg.auth.token_user_not_found"), contactKeyboard());
+            }
+        }
+        if (!MessageUtils.isValidPhone(text)) {
+            return SceneOutput.send(messages.get("tg.auth.request_contact"), contactKeyboard());
         }
         Optional<User> user = userService.findByPhoneNumber(MessageUtils.getValidPhone(text));
         if (user.isEmpty()) {

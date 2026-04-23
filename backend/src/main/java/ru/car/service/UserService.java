@@ -61,6 +61,10 @@ public class UserService {
         return userRepository.findByPhoneNumber(phoneNumber);
     }
 
+    public Optional<User> findById(Long id) {
+        return userRepository.findById(id);
+    }
+
     @Transactional
     public UserDto deleteUser(Long userId) {
         User user = getUserOrThrowNotFound(userId);

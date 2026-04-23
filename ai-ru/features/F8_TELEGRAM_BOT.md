@@ -1,6 +1,6 @@
 # F8: Telegram-бот (уведомления + команды)
 
-**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-23 (Phase 2.3 — Report/Support/Marketplace)
+**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-23 (Phase 2.4 — deep-link онбординг)
 
 ## Что делает
 
@@ -15,9 +15,17 @@ Telegram-бот решает две задачи:
 
 ### Привязка Telegram к аккаунту
 
+**Вариант A (deep-link, Phase 2.4, основной):**
+1. В мобильном приложении пользователь нажимает «Подключить бота» на экране «Настройки уведомлений».
+2. Мобилка вызывает `POST /api/telegram.get_start_url` — backend генерирует подписанный HMAC-токен (TTL 15 мин, формат `<b64payload>_<b64sig>`, ≤64 символа) и возвращает URL `https://t.me/<bot>?start=<token>`.
+3. `url_launcher` открывает Telegram → пользователь нажимает кнопку `Start` → TG отправляет `/start <token>`.
+4. `TelegramRouter.extractAuthText` отсекает префикс `/start `, `TelegramAuthorizationService` верифицирует токен через `TelegramStartTokenService.verify`, находит `userId`, вызывает `updateTelegramDialogIdByUserId(userId, chatId)` → `ReplyKeyboardRemove` + «✅ Готово. Ваш Telegram привязан».
+5. При возврате в мобилку `WidgetsBindingObserver.didChangeAppLifecycleState == resumed` → автоматический `fetchNotificationSettings()` → snackbar «✅ Telegram подключён».
+
+**Вариант B (shareContact, fallback для пришедших в бота напрямую):**
 1. Пользователь пишет боту → бот видит, что `telegram_dialog_id` незнаком.
 2. Бот запрашивает контакт (кнопка «поделиться контактом»).
-3. Если телефон есть в таблице `users` — записывается `notification_setting.telegram_dialog_id = chatId`, выдаётся приветствие; reply-клавиатура убирается через `ReplyKeyboardRemove`, роутер автоматически рендерит `HomeScene` отдельным сообщением.
+3. Если телефон есть в таблице `users` — записывается `notification_setting.telegram_dialog_id = chatId`, `ReplyKeyboardRemove` + welcome, роутер авто-рендерит `HomeScene`.
 4. Если телефона нет — бот предлагает скачать мобильное приложение.
 
 ### Получение уведомления
@@ -111,7 +119,9 @@ reply-кнопка «поделиться контактом» (`tg.auth.btn.sha
 **Backend (пакет `ru.car.service.message.telegram`, Phase 2.1–2.3):**
 - `TelegramBotService` — тонкий транспорт: `extends TelegramLongPollingBot implements Sender, TelegramTransport`. Делегирует входящие `Update` в `TelegramRouter`; исходящие уведомления рендерит через `NotificationMarkReadScene` → `TelegramRenderer`. Умеет `sendPhoto`.
 - `TelegramRouter` (пакет `router/`) — entry-point: pre-auth (через `TelegramAuthorizationService`, после привязки автоматически рендерит `HomeScene`) | callback-роутинг (через `SceneRegistry` по `CallbackData.scene()`, служебное `:back` → родительская сцена через `parentKey()`) | text-триггеры (pending-state через `SceneStateRegistry.peek` → `scene.handleText`, иначе `SceneRegistry.findByText`). Fallback — `HomeScene.renderUnknown`.
-- `TelegramAuthorizationService` (пакет `auth/`) — shareContact flow с привязкой `telegram_dialog_id`; welcome возвращает `ReplyKeyboardRemove`.
+- `TelegramAuthorizationService` (пакет `auth/`) — shareContact flow + deep-link flow (HMAC-signed `/start <token>`). При успехе возвращает welcome + `ReplyKeyboardRemove`.
+- `TelegramStartTokenService` (пакет `auth/`) — HMAC-SHA256 подписывает payload `userId:expiresAt`, truncated-signature 10 байт. Ключ переиспользует `token.signing.key` (JWT secret). Token ≤ 64 символов (Telegram /start payload budget), `[A-Za-z0-9_-]`.
+- `TelegramAuthController` (пакет `controller/`) — `POST /api/telegram.get_start_url` → возвращает `{url: "https://t.me/<bot>?start=<token>"}` для авторизованного пользователя (TTL 15 мин).
 - `SceneRegistry` (пакет `scene/`) — Spring DI собирает `List<TelegramScene>` и мапит по `key()`.
 - `SceneStateRegistry` (пакет `scene/state/`) — in-memory `ConcurrentHashMap<chatId, PendingText>` с TTL 5 мин для multi-step форм.
 - Сцены (пакет `scene/impl/`): `HomeScene` (главное меню со счётчиками + fallback `renderUnknown`), `QrListScene` (HTML-карточки), `QrDetailsScene` (детали + PNG + disable + «сообщить о событии»), `NotificationListScene` (вкладки + пагинация + qr-фильтр), `NotificationMarkReadScene` (карточка уведомления), `NotificationSettingsScene` (три свитча), `ProfileScene` (телефон + выход + удаление), `TemporaryQrScene` (PNG), `ReportEventScene` (4 шага + pending-state), `SupportScene` (одношаговый feedback), `MarketplaceScene` (WB/Ozon URL-кнопки).
@@ -142,6 +152,7 @@ reply-кнопка «поделиться контактом» (`tg.auth.btn.sha
 - Phase 2.1 (архитектура): [`review/2026-04-21_TG_2.1_ARCHITECTURE.md`](../review/2026-04-21_TG_2.1_ARCHITECTURE.md) · [`review/2026-04-21_TG_2.1_PLAN.md`](../review/2026-04-21_TG_2.1_PLAN.md).
 - Phase 2.2 (базовые экраны): [`review/2026-04-21_TG_2.2_BASIC_SCREENS.md`](../review/2026-04-21_TG_2.2_BASIC_SCREENS.md) · [`review/2026-04-21_TG_2.2_PLAN.md`](../review/2026-04-21_TG_2.2_PLAN.md).
 - Phase 2.3 (user actions): [`review/2026-04-21_TG_2.3_USER_ACTIONS.md`](../review/2026-04-21_TG_2.3_USER_ACTIONS.md) · [`review/2026-04-21_TG_2.3_PLAN.md`](../review/2026-04-21_TG_2.3_PLAN.md).
+- Phase 2.4 (deep-link онбординг): [`review/2026-04-21_TG_2.4_DEEP_LINK.md`](../review/2026-04-21_TG_2.4_DEEP_LINK.md) · [`review/2026-04-21_TG_2.4_PLAN.md`](../review/2026-04-21_TG_2.4_PLAN.md).
 - Мастер-эпик: [`review/2026-04-21_TELEGRAM_EPIC.md`](../review/2026-04-21_TELEGRAM_EPIC.md).
 
 ## Ссылки

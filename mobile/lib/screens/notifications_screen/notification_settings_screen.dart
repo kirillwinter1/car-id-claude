@@ -100,7 +100,7 @@ class NotificationSettingsScreen extends StatelessWidget {
                                       title: 'Подключить бота',
                                       onPressed: () {
                                         Get.back();
-                                        Utils.openUrl(TELEGRAM_BOT_URL);
+                                        ctrl.launchTelegramBot();
                                       },
                                       height: SC.s(44),
                                       minWidth: null,
