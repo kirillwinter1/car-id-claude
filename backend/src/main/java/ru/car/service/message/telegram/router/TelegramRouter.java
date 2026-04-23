@@ -145,7 +145,14 @@ public class TelegramRouter {
             if (message.getContact() != null && message.getContact().getPhoneNumber() != null) {
                 return message.getContact().getPhoneNumber();
             }
-            return Objects.requireNonNullElse(message.getText(), "");
+            String text = Objects.requireNonNullElse(message.getText(), "");
+            if (text.startsWith("/start ")) {
+                return text.substring("/start ".length()).trim();
+            }
+            if ("/start".equals(text.trim())) {
+                return "";
+            }
+            return text;
         }
         return "";
     }

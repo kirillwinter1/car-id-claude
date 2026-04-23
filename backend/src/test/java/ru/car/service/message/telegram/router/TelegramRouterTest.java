@@ -71,6 +71,28 @@ class TelegramRouterTest {
     }
 
     @Test
+    void startCommandWithPayload_stripsPrefixBeforeAuth() {
+        Update update = textUpdate(100L, "/start MY.TOKEN.STRING");
+        when(settingRepository.existsByTelegramDialogId(100L)).thenReturn(false);
+        when(authService.handle(100L, "MY.TOKEN.STRING")).thenReturn(SceneOutput.send("welcome", null));
+
+        router.route(update);
+
+        verify(authService).handle(100L, "MY.TOKEN.STRING");
+    }
+
+    @Test
+    void bareStartCommand_passesEmptyTextToAuth() {
+        Update update = textUpdate(100L, "/start");
+        when(settingRepository.existsByTelegramDialogId(100L)).thenReturn(false);
+        when(authService.handle(100L, "")).thenReturn(SceneOutput.send("share contact", null));
+
+        router.route(update);
+
+        verify(authService).handle(100L, "");
+    }
+
+    @Test
     void authService_usesContactPhoneWhenPresent() {
         Update update = contactUpdate(100L, "+79001234567");
         when(settingRepository.existsByTelegramDialogId(100L)).thenReturn(false);
