@@ -1,6 +1,6 @@
 # F8: Telegram-бот (уведомления + команды)
 
-**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-23 (Phase 2.4 — deep-link онбординг)
+**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-23 (Phase 2.5 — notification card; эпик закрыт)
 
 ## Что делает
 
@@ -28,11 +28,22 @@ Telegram-бот решает две задачи:
 3. Если телефон есть в таблице `users` — записывается `notification_setting.telegram_dialog_id = chatId`, `ReplyKeyboardRemove` + welcome, роутер авто-рендерит `HomeScene`.
 4. Если телефона нет — бот предлагает скачать мобильное приложение.
 
-### Получение уведомления
+### Получение уведомления (Phase 2.5 — HTML-карточка)
 
 1. Backend отправил `sendPush` → `TelegramBotService.sendNotification(TextMessage)` через `MessageService.asyncSend`.
-2. Сообщение приходит в чат с inline-кнопкой «отметить прочитанным» (callback = `notif:read:<uuid>`).
-3. При клике: `TelegramRouter` → `NotificationMarkReadScene` вызывает `NotificationFacade.readBy()` и убирает кнопку.
+2. `NotificationMarkReadScene.renderNotification` по `notificationId` подгружает полный `Notification` (с `qr` и `reason`), формирует HTML-карточку:
+   ```
+   🚨 <b>Audi Q5</b> · №145
+   Произошло ДТП
+
+   «Сработала сигнализация, пошла 5 минут назад»
+
+   <i>23 марта, 10:35</i>
+   ```
+   Эмодзи — по `reasonId` через `tg.reason.emoji.<id>` (fallback `🚗`).
+3. Две кнопки: `[✓ Отметить прочитанным]` → `notif:read:<notifId>` и `[🚘 К метке]` → `qr_details:open:<qrId>`.
+4. При клике «Отметить»: `NotificationMarkReadScene.handle` → `NotificationFacade.readBy()` → убирает клавиатуру (`editMarkup(null)`).
+5. Если уведомление уже прочитано — кнопка «Отметить» не показывается, остаётся только «К метке».
 
 ### QR-коды через бота
 
@@ -153,6 +164,7 @@ reply-кнопка «поделиться контактом» (`tg.auth.btn.sha
 - Phase 2.2 (базовые экраны): [`review/2026-04-21_TG_2.2_BASIC_SCREENS.md`](../review/2026-04-21_TG_2.2_BASIC_SCREENS.md) · [`review/2026-04-21_TG_2.2_PLAN.md`](../review/2026-04-21_TG_2.2_PLAN.md).
 - Phase 2.3 (user actions): [`review/2026-04-21_TG_2.3_USER_ACTIONS.md`](../review/2026-04-21_TG_2.3_USER_ACTIONS.md) · [`review/2026-04-21_TG_2.3_PLAN.md`](../review/2026-04-21_TG_2.3_PLAN.md).
 - Phase 2.4 (deep-link онбординг): [`review/2026-04-21_TG_2.4_DEEP_LINK.md`](../review/2026-04-21_TG_2.4_DEEP_LINK.md) · [`review/2026-04-21_TG_2.4_PLAN.md`](../review/2026-04-21_TG_2.4_PLAN.md).
+- Phase 2.5 (notification card): [`review/2026-04-21_TG_2.5_NOTIFICATION_CARD.md`](../review/2026-04-21_TG_2.5_NOTIFICATION_CARD.md) · [`review/2026-04-21_TG_2.5_PLAN.md`](../review/2026-04-21_TG_2.5_PLAN.md).
 - Мастер-эпик: [`review/2026-04-21_TELEGRAM_EPIC.md`](../review/2026-04-21_TELEGRAM_EPIC.md).
 
 ## Ссылки

@@ -36,23 +36,22 @@
 
 ---
 
-## Phase 2 — Telegram-бот как второй клиент 📋
+## Phase 2 — Telegram-бот как второй клиент ✅ (завершена 2026-04-23)
 
-**Фокус:** превратить Telegram-бота в полноценную копию мобильного приложения — те же экраны, те же команды, те же переходы, — и сохранить его как канал доставки уведомлений. Архитектурно — заложить расширяемость под Phase 5 (аренда машиномест).
+**Фокус:** превратить Telegram-бота в полноценную копию мобильного приложения — те же экраны, те же команды, те же переходы, — и сохранить его как канал доставки уведомлений. Архитектурно — заложена расширяемость под Phase 5 (аренда машиномест).
 
 Подробности:
-- Мастер-документ эпика → [review/2026-04-21_TELEGRAM_EPIC.md](review/2026-04-21_TELEGRAM_EPIC.md) (декомпозиция на 5 под-спеков 2.1–2.5).
-- Первый под-спек → [review/2026-04-21_TG_2.1_ARCHITECTURE.md](review/2026-04-21_TG_2.1_ARCHITECTURE.md) (архитектура + Scene-скелет, preserve-behaviour).
-- Бэклог-карточка → [backlog/BF1_TELEGRAM_BOT_UI.md](backlog/BF1_TELEGRAM_BOT_UI.md) (обновлена под эпик).
+- Мастер-документ эпика → [review/2026-04-21_TELEGRAM_EPIC.md](review/2026-04-21_TELEGRAM_EPIC.md) — все 5 под-спеков 2.1–2.5 закрыты.
+- Бэклог-карточка → [backlog/BF1_TELEGRAM_BOT_UI.md](backlog/BF1_TELEGRAM_BOT_UI.md) — помечена Closed.
 
-Ключевое:
-- Архитектура «сцен» — новая фича (включая парковочную аренду) = новый `@Component implements TelegramScene`, без правок ядра.
-- Edit-in-place навигация: одно сообщение редактируется между экранами, уведомления приходят отдельно.
-- Админ-меню удаляется — мониторинг уже в Prometheus/Grafana.
-- Telegram-код остаётся в основном gradle-модуле.
-- Закрывает [TECH_DEBT A1–A4](TECH_DEBT.md) в рамках под-спека 2.1.
+Что сделано:
+- **2.1** Архитектура: `TelegramRouter` + `SceneRegistry` + `SceneOutput` + `TelegramRenderer`, разорван Bot↔Logic цикл, удалено админ-меню, тексты в i18n.
+- **2.2** Базовые экраны: Home со счётчиками, QR-list/details (PNG вместо PDF), Notifications (tabs+pagination+qr-filter), Settings, Profile, TemporaryQr v2 (PNG). Edit-in-place, auto-Home after auth, `ReplyKeyboardRemove`.
+- **2.3** User actions: ReportEventScene (multi-step form), SupportScene, MarketplaceScene (WB+Ozon). `SceneStateRegistry` для pending-text-state.
+- **2.4** Deep-link онбординг: `TelegramStartTokenService` (HMAC-подписанный токен, TTL 15 мин), `POST /api/telegram.get_start_url`, мобилка открывает `t.me/<bot>?start=<token>` и авто-рефрешит настройки после возврата.
+- **2.5** Notification card: HTML + эмодзи-по-reason + «К метке»-кнопка. Архитектура финализирована — `HomeScene.KEY` константа, Javadoc-пример добавления новой сцены для Phase 5.
 
-**Предусловие:** стабилизация завершена ✅.
+Закрыт [TECH_DEBT A1–A4](TECH_DEBT.md) в рамках под-спека 2.1.
 
 ---
 
