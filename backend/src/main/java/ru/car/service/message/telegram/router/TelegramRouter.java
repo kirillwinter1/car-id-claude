@@ -14,6 +14,7 @@ import ru.car.service.message.telegram.scene.SceneOutput;
 import ru.car.service.message.telegram.scene.SceneRegistry;
 import ru.car.service.message.telegram.scene.TelegramScene;
 import ru.car.service.message.telegram.scene.impl.HomeScene;
+import ru.car.service.message.telegram.scene.state.SceneStateRegistry;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -28,19 +29,22 @@ public class TelegramRouter {
     private final TelegramAuthorizationService authService;
     private final HomeScene homeScene;
     private final TelegramRenderer renderer;
+    private final SceneStateRegistry sceneStateRegistry;
 
     public TelegramRouter(NotificationSettingRepository settingRepository,
                           UserService userService,
                           SceneRegistry sceneRegistry,
                           TelegramAuthorizationService authService,
                           HomeScene homeScene,
-                          TelegramRenderer renderer) {
+                          TelegramRenderer renderer,
+                          SceneStateRegistry sceneStateRegistry) {
         this.settingRepository = settingRepository;
         this.userService = userService;
         this.sceneRegistry = sceneRegistry;
         this.authService = authService;
         this.homeScene = homeScene;
         this.renderer = renderer;
+        this.sceneStateRegistry = sceneStateRegistry;
     }
 
     @Transactional
@@ -112,6 +116,15 @@ public class TelegramRouter {
 
     private void handleText(TelegramUpdateContext ctx) {
         String text = ctx.text().orElse("");
+        Optional<SceneStateRegistry.PendingText> pending = sceneStateRegistry.peek(ctx.chatId());
+        if (pending.isPresent()) {
+            Optional<TelegramScene> pendingScene = sceneRegistry.findByKey(pending.get().scene());
+            if (pendingScene.isPresent()) {
+                SceneOutput output = pendingScene.get().handleText(text, ctx, pending.get().args());
+                renderer.dispatch(output, ctx.chatId(), null);
+                return;
+            }
+        }
         Optional<TelegramScene> scene = sceneRegistry.findByText(text);
         if (scene.isEmpty()) {
             dispatchUnknown(ctx);

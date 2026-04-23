@@ -1,13 +1,15 @@
 # BF1: Telegram-бот как второй клиент приложения
 
-**Статус:** 🚧 In progress (Phase 2 в [ROADMAP.md](../ROADMAP.md)) — эпик из 5 под-спеков, 2.1 и 2.2 закрыты
+**Статус:** 🚧 In progress (Phase 2 в [ROADMAP.md](../ROADMAP.md)) — эпик из 5 под-спеков, 2.1/2.2/2.3 закрыты
 **Последний апдейт:** 2026-04-23
 
 > **⚠️ Скоуп пересмотрен 2026-04-21.** Изначально BF1 = «рефакторинг + HTML/эмодзи». По итогам брейнсторма превращён в эпик: **бот = копия мобильного приложения** (те же экраны, команды, переходы) + канал уведомлений + задел под Phase 5 (парковка). Полный план — в **[review/2026-04-21_TELEGRAM_EPIC.md](../review/2026-04-21_TELEGRAM_EPIC.md)**.
 >
 > **✅ Под-спек 2.1 закрыт 2026-04-21** — архитектура + Scene-скелет + i18n + удаление админ-меню. См. [review/2026-04-21_TG_2.1_ARCHITECTURE.md](../review/2026-04-21_TG_2.1_ARCHITECTURE.md) и [review/2026-04-21_TG_2.1_PLAN.md](../review/2026-04-21_TG_2.1_PLAN.md).
 >
-> **✅ Под-спек 2.2 закрыт 2026-04-23** — перенос базовых экранов: `HomeScene` со счётчиками, `QrListScene` v2 (HTML-карточки), `QrDetailsScene` (PNG вместо PDF + disable), `NotificationListScene` (вкладки + пагинация + qr-фильтр), `NotificationSettingsScene` (3 свитча), `ProfileScene` (телефон + выход + удаление), `TemporaryQrScene` v2 (PNG). Edit-in-place навигация через `parentKey()` + `:back`. Auth-welcome → `ReplyKeyboardRemove` + авто-рендер Home. Удалён легаси `HomeMenuScene`. См. [review/2026-04-21_TG_2.2_BASIC_SCREENS.md](../review/2026-04-21_TG_2.2_BASIC_SCREENS.md) и [review/2026-04-21_TG_2.2_PLAN.md](../review/2026-04-21_TG_2.2_PLAN.md). Следующий под-спек — 2.3 (ReportEvent + Support + Marketplace).
+> **✅ Под-спек 2.2 закрыт 2026-04-23** — перенос базовых экранов: `HomeScene` со счётчиками, `QrListScene` v2 (HTML-карточки), `QrDetailsScene` (PNG вместо PDF + disable), `NotificationListScene` (вкладки + пагинация + qr-фильтр), `NotificationSettingsScene` (3 свитча), `ProfileScene` (телефон + выход + удаление), `TemporaryQrScene` v2 (PNG). Edit-in-place навигация через `parentKey()` + `:back`. Auth-welcome → `ReplyKeyboardRemove` + авто-рендер Home. Удалён легаси `HomeMenuScene`. См. [review/2026-04-21_TG_2.2_BASIC_SCREENS.md](../review/2026-04-21_TG_2.2_BASIC_SCREENS.md) и [review/2026-04-21_TG_2.2_PLAN.md](../review/2026-04-21_TG_2.2_PLAN.md).
+>
+> **✅ Под-спек 2.3 закрыт 2026-04-23** — user actions: `ReportEventScene` (многошаговая форма выбор QR → причина → текст → отправка через `NotificationFacade.send`), `SupportScene` (одношаговый feedback через `FeedbackFacade.send` с `FeedbackChannels.TELEGRAM`), `MarketplaceScene` (URL-кнопки на Wildberries и Ozon). `SceneStateRegistry` для multi-step форм (in-memory, TTL 5 мин). `TelegramScene.handleText` + роутер обрабатывает pending-text-state. См. [review/2026-04-21_TG_2.3_USER_ACTIONS.md](../review/2026-04-21_TG_2.3_USER_ACTIONS.md) и [review/2026-04-21_TG_2.3_PLAN.md](../review/2026-04-21_TG_2.3_PLAN.md). Следующий под-спек — 2.4 (deep-link онбординг).
 
 ## Что делаем
 

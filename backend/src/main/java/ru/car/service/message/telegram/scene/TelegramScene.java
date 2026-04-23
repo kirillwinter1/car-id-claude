@@ -3,6 +3,8 @@ package ru.car.service.message.telegram.scene;
 import ru.car.service.message.telegram.router.CallbackData;
 import ru.car.service.message.telegram.router.TelegramUpdateContext;
 
+import java.util.List;
+
 public interface TelegramScene {
 
     /**
@@ -38,5 +40,14 @@ public interface TelegramScene {
      */
     default String parentKey() {
         return "home";
+    }
+
+    /**
+     * Обработка текстового сообщения пользователя в рамках multi-step формы
+     * (когда в SceneStateRegistry есть pending-state для этого chatId).
+     * Default — noop; переопределяют сцены, ждущие пользовательский ввод.
+     */
+    default SceneOutput handleText(String text, TelegramUpdateContext ctx, List<String> args) {
+        return SceneOutput.noop();
     }
 }
