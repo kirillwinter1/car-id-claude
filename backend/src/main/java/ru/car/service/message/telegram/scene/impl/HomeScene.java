@@ -70,7 +70,10 @@ public class HomeScene implements TelegramScene {
         rows.add(row(notifBtn, "notif_list:open:all:1"));
         rows.add(row(qrsBtn, "qr_list:open"));
         rows.add(row(messages.get("tg.home.btn.temp_qr"), "temp_qr:create"));
+        rows.add(row(messages.get("tg.home.btn.report"), "report:start"));
         rows.add(row(messages.get("tg.home.btn.settings"), "settings:open"));
+        rows.add(row(messages.get("tg.home.btn.support"), "support:start"));
+        rows.add(row(messages.get("tg.home.btn.marketplace"), "marketplace:open"));
         rows.add(row(messages.get("tg.home.btn.profile"), "profile:open"));
 
         InlineKeyboardMarkup kb = new InlineKeyboardMarkup();
