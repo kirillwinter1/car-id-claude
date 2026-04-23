@@ -19,7 +19,10 @@ import ru.car.service.message.telegram.scene.SceneOutput;
 import ru.car.service.message.telegram.scene.SceneRegistry;
 import ru.car.service.message.telegram.scene.TelegramScene;
 import ru.car.service.message.telegram.scene.impl.HomeScene;
+import ru.car.service.message.telegram.scene.state.SceneStateRegistry;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -40,13 +43,14 @@ class TelegramRouterTest {
     @Mock TelegramAuthorizationService authService;
     @Mock HomeScene homeScene;
     @Mock TelegramRenderer renderer;
+    @Mock SceneStateRegistry sceneStateRegistry;
     @Mock TelegramScene matchedScene;
 
     private TelegramRouter router;
 
     @BeforeEach
     void setUp() {
-        router = new TelegramRouter(settingRepository, userService, sceneRegistry, authService, homeScene, renderer);
+        router = new TelegramRouter(settingRepository, userService, sceneRegistry, authService, homeScene, renderer, sceneStateRegistry);
     }
 
     @Test
@@ -146,6 +150,24 @@ class TelegramRouterTest {
 
         verify(listScene).render(any(TelegramUpdateContext.class));
         verify(renderer).dispatch(any(SceneOutput.class), eq(100L), any());
+    }
+
+    @Test
+    void handleText_whenPendingState_delegatesToSceneHandleText() {
+        Update update = textUpdate(100L, "hello");
+        mockAuthorized(100L, 42L);
+        SceneStateRegistry.PendingText pending = new SceneStateRegistry.PendingText(
+            "report", "text", List.of("qr-id", "42"), null, Instant.now().plusSeconds(60));
+        when(sceneStateRegistry.peek(100L)).thenReturn(Optional.of(pending));
+        TelegramScene reportScene = mock(TelegramScene.class);
+        when(sceneRegistry.findByKey("report")).thenReturn(Optional.of(reportScene));
+        when(reportScene.handleText(eq("hello"), any(), eq(List.of("qr-id", "42"))))
+            .thenReturn(SceneOutput.editHtml("done", null));
+
+        router.route(update);
+
+        verify(reportScene).handleText(eq("hello"), any(), eq(List.of("qr-id", "42")));
+        verify(sceneRegistry, never()).findByText(any());
     }
 
     @Test
