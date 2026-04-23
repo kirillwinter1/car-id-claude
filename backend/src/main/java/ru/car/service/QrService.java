@@ -126,6 +126,20 @@ public class QrService {
     }
 
     @Transactional
+    public void disable(UUID id) {
+        Qr qr = findByIdOrThrowNotFound(id);
+        qr.setStatus(QrStatus.DELETED);
+        qrRepository.delete(qr);
+    }
+
+    @Transactional(readOnly = true)
+    public int countByUserId(Long userId) {
+        return (int) qrRepository.findByUserId(userId).stream()
+                .filter(qr -> !QrStatus.DELETED.equals(qr.getStatus()))
+                .count();
+    }
+
+    @Transactional
     public void deleteAllByUserId(Long userId) {
         notificationRepository.deleteAllByUserId(userId);
         qrRepository.destroyTemporaryByUserId(userId);

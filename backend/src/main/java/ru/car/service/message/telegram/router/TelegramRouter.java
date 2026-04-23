@@ -13,7 +13,7 @@ import ru.car.service.message.telegram.render.TelegramRenderer;
 import ru.car.service.message.telegram.scene.SceneOutput;
 import ru.car.service.message.telegram.scene.SceneRegistry;
 import ru.car.service.message.telegram.scene.TelegramScene;
-import ru.car.service.message.telegram.scene.impl.HomeMenuScene;
+import ru.car.service.message.telegram.scene.impl.HomeScene;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -26,20 +26,20 @@ public class TelegramRouter {
     private final UserService userService;
     private final SceneRegistry sceneRegistry;
     private final TelegramAuthorizationService authService;
-    private final HomeMenuScene homeMenuScene;
+    private final HomeScene homeScene;
     private final TelegramRenderer renderer;
 
     public TelegramRouter(NotificationSettingRepository settingRepository,
                           UserService userService,
                           SceneRegistry sceneRegistry,
                           TelegramAuthorizationService authService,
-                          HomeMenuScene homeMenuScene,
+                          HomeScene homeScene,
                           TelegramRenderer renderer) {
         this.settingRepository = settingRepository;
         this.userService = userService;
         this.sceneRegistry = sceneRegistry;
         this.authService = authService;
-        this.homeMenuScene = homeMenuScene;
+        this.homeScene = homeScene;
         this.renderer = renderer;
     }
 
@@ -54,6 +54,15 @@ public class TelegramRouter {
             String text = extractAuthText(update);
             SceneOutput output = authService.handle(chatId, text);
             renderer.dispatch(output, chatId, null);
+            if (settingRepository.existsByTelegramDialogId(chatId)) {
+                Long newUserId = settingRepository.findUserIdByTelegramDialogId(chatId);
+                User newUser = userService.getUserOrThrowNotFound(newUserId);
+                TelegramUpdateContext homeCtx = new TelegramUpdateContext(chatId, newUserId, newUser, update);
+                sceneRegistry.findByKey("home").ifPresent(home -> {
+                    SceneOutput homeOutput = home.render(homeCtx);
+                    renderer.dispatch(homeOutput, chatId, null);
+                });
+            }
             return;
         }
 
@@ -75,12 +84,28 @@ public class TelegramRouter {
             dispatchUnknown(ctx);
             return;
         }
-        Optional<TelegramScene> scene = sceneRegistry.findByKey(parsed.get().scene());
-        if (scene.isEmpty()) {
+        CallbackData data = parsed.get();
+        Optional<TelegramScene> sceneOpt = sceneRegistry.findByKey(data.scene());
+        if (sceneOpt.isEmpty()) {
             dispatchUnknown(ctx);
             return;
         }
-        SceneOutput output = scene.get().handle(parsed.get(), ctx);
+        TelegramScene scene = sceneOpt.get();
+
+        if ("back".equals(data.action())) {
+            Optional<TelegramScene> parent = sceneRegistry.findByKey(scene.parentKey());
+            if (parent.isPresent()) {
+                SceneOutput parentOutput = parent.get().render(ctx);
+                // force edit-in-place for back navigation even if parent's render returned a fresh send
+                SceneOutput editVersion = new SceneOutput(
+                        parentOutput.text(), parentOutput.inlineKeyboard(), null, true,
+                        parentOutput.parseMode(), null, null);
+                renderer.dispatch(editVersion, ctx.chatId(), ctx.callbackMessage().orElse(null));
+                return;
+            }
+        }
+
+        SceneOutput output = scene.handle(data, ctx);
         Message editTarget = ctx.callbackMessage().orElse(null);
         renderer.dispatch(output, ctx.chatId(), editTarget);
     }
@@ -97,7 +122,7 @@ public class TelegramRouter {
     }
 
     private void dispatchUnknown(TelegramUpdateContext ctx) {
-        SceneOutput output = homeMenuScene.renderUnknown(ctx);
+        SceneOutput output = homeScene.renderUnknown(ctx);
         renderer.dispatch(output, ctx.chatId(), null);
     }
 

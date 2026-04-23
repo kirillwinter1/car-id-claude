@@ -47,4 +47,24 @@ public class MessageUtils {
         } catch (Throwable ignored) {}
         return null;
     }
+
+    public static String escapeHtml(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        return raw.replace("&", "&amp;")
+                  .replace("<", "&lt;")
+                  .replace(">", "&gt;");
+    }
+
+    public static String formatPhone(String phone) {
+        if (phone == null) {
+            return "";
+        }
+        if (phone.length() != 11 || !phone.startsWith("7") || !phone.matches("\\d+")) {
+            return phone;
+        }
+        return "+" + phone.charAt(0) + " " + phone.substring(1, 4) + " " + phone.substring(4, 7)
+                + "-" + phone.substring(7, 9) + "-" + phone.substring(9, 11);
+    }
 }

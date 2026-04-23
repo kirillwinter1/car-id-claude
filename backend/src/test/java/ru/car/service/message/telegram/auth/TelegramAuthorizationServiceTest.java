@@ -7,12 +7,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardRemove;
 import ru.car.model.User;
 import ru.car.repository.NotificationSettingRepository;
 import ru.car.service.UserService;
 import ru.car.service.message.telegram.render.TelegramMessages;
 import ru.car.service.message.telegram.scene.SceneOutput;
-import ru.car.service.message.telegram.scene.impl.HomeMenuScene;
 
 import java.util.Optional;
 
@@ -30,8 +30,7 @@ class TelegramAuthorizationServiceTest {
 
     @BeforeEach
     void setUp() {
-        TelegramMessages msgs = messages();
-        service = new TelegramAuthorizationService(userService, settingRepository, msgs, new HomeMenuScene(msgs));
+        service = new TelegramAuthorizationService(userService, settingRepository, messages());
     }
 
     @Test
@@ -57,7 +56,7 @@ class TelegramAuthorizationServiceTest {
     }
 
     @Test
-    void validPhoneAndUserFound_bindsAndReturnsWelcome() {
+    void validPhoneAndUserFound_bindsAndReturnsWelcomeWithKeyboardRemove() {
         User user = new User();
         user.setId(42L);
         when(settingRepository.existsByTelegramDialogId(100L)).thenReturn(false);
@@ -67,7 +66,7 @@ class TelegramAuthorizationServiceTest {
 
         verify(settingRepository).updateTelegramDialogIdByUserId(42L, 100L);
         assertThat(output.text()).contains("Рады приветствовать");
-        assertThat(output.replyKeyboard()).isNotNull();
+        assertThat(output.replyKeyboard()).isInstanceOf(ReplyKeyboardRemove.class);
     }
 
     @Test

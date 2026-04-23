@@ -6,6 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import ru.car.dto.*;
+import ru.car.dto.PageParam;
 import ru.car.enums.ErrorCode;
 import ru.car.enums.NotificationStatus;
 import ru.car.exception.BadRequestException;
@@ -20,6 +21,7 @@ import ru.car.service.security.AuthService;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -222,8 +224,27 @@ public class NotificationService {
                 .build();
     }
 
+    @Transactional(readOnly = true)
+    public int countUnreadByUserId(Long userId) {
+        Integer count = notificationRepository.findCountByUserIdAndStatus(userId, NotificationStatus.UNREAD);
+        return count == null ? 0 : count;
+    }
+
     @Transactional
     public boolean delete(NotificationDto dto) {
         return notificationRepository.deleteById(dto.getNotificationId());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Notification> findForBot(Long userId, String tab, UUID qrFilter, PageParam page) {
+        boolean unread = "unread".equals(tab);
+        if (qrFilter != null) {
+            return unread
+                ? notificationRepository.findPageByUserIdAndStatusAndQrId(userId, NotificationStatus.UNREAD, qrFilter, page)
+                : notificationRepository.findPageByUserIdAndQrId(userId, qrFilter, page);
+        }
+        return unread
+            ? notificationRepository.findPageByUserIdAndStatus(userId, NotificationStatus.UNREAD, page)
+            : notificationRepository.findPageByUserId(userId, page);
     }
 }

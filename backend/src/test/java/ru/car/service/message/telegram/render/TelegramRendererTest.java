@@ -97,6 +97,22 @@ class TelegramRendererTest {
         verify(transport, never()).edit(org.mockito.ArgumentMatchers.any(EditMessageText.class));
     }
 
+    @Test
+    void dispatchesPhoto_whenSceneOutputHasPhoto() {
+        org.telegram.telegrambots.meta.api.objects.InputFile inputFile =
+            new org.telegram.telegrambots.meta.api.objects.InputFile(
+                new java.io.ByteArrayInputStream(new byte[]{1,2,3}), "qr.png");
+        SceneOutput output = SceneOutput.photo(inputFile, "Audi Q5");
+
+        renderer.dispatch(output, 42L, null);
+
+        org.mockito.ArgumentCaptor<org.telegram.telegrambots.meta.api.methods.send.SendPhoto> captor =
+            org.mockito.ArgumentCaptor.forClass(org.telegram.telegrambots.meta.api.methods.send.SendPhoto.class);
+        verify(transport).sendPhoto(captor.capture());
+        assertThat(captor.getValue().getCaption()).isEqualTo("Audi Q5");
+        assertThat(captor.getValue().getParseMode()).isEqualTo("HTML");
+    }
+
     private static Message editTarget(long chatId, int messageId) {
         Message msg = new Message();
         org.telegram.telegrambots.meta.api.objects.Chat chat = new org.telegram.telegrambots.meta.api.objects.Chat();

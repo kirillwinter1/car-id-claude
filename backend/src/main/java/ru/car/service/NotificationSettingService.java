@@ -46,6 +46,18 @@ public class NotificationSettingService {
     }
 
     @Transactional
+    public NotificationSetting toggleChannel(Long userId, String channel) {
+        NotificationSetting setting = notificationSettingRepository.findByUserId(userId);
+        switch (channel) {
+            case "push" -> setting.setPushEnabled(!Boolean.TRUE.equals(setting.getPushEnabled()));
+            case "call" -> setting.setCallEnabled(!Boolean.TRUE.equals(setting.getCallEnabled()));
+            case "telegram" -> setting.setTelegramEnabled(!Boolean.TRUE.equals(setting.getTelegramEnabled()));
+            default -> throw new IllegalArgumentException("Unknown channel: " + channel);
+        }
+        return notificationSettingRepository.update(setting);
+    }
+
+    @Transactional
     public void deleteByUserId(Long userId) {
         notificationSettingRepository.update(NotificationSetting.builder()
                 .userId(userId)

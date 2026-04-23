@@ -18,14 +18,16 @@ import ru.car.service.message.telegram.render.TelegramRenderer;
 import ru.car.service.message.telegram.scene.SceneOutput;
 import ru.car.service.message.telegram.scene.SceneRegistry;
 import ru.car.service.message.telegram.scene.TelegramScene;
-import ru.car.service.message.telegram.scene.impl.HomeMenuScene;
+import ru.car.service.message.telegram.scene.impl.HomeScene;
 
 import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,7 +38,7 @@ class TelegramRouterTest {
     @Mock UserService userService;
     @Mock SceneRegistry sceneRegistry;
     @Mock TelegramAuthorizationService authService;
-    @Mock HomeMenuScene homeMenuScene;
+    @Mock HomeScene homeScene;
     @Mock TelegramRenderer renderer;
     @Mock TelegramScene matchedScene;
 
@@ -44,7 +46,7 @@ class TelegramRouterTest {
 
     @BeforeEach
     void setUp() {
-        router = new TelegramRouter(settingRepository, userService, sceneRegistry, authService, homeMenuScene, renderer);
+        router = new TelegramRouter(settingRepository, userService, sceneRegistry, authService, homeScene, renderer);
     }
 
     @Test
@@ -76,6 +78,23 @@ class TelegramRouterTest {
     }
 
     @Test
+    void afterSuccessfulAuth_rendersHomeSceneAsSecondMessage() {
+        Update update = contactUpdate(100L, "+79001234567");
+        when(settingRepository.existsByTelegramDialogId(100L)).thenReturn(false, true);
+        when(authService.handle(100L, "+79001234567")).thenReturn(SceneOutput.send("welcome", null));
+        when(settingRepository.findUserIdByTelegramDialogId(100L)).thenReturn(42L);
+        when(userService.getUserOrThrowNotFound(42L)).thenReturn(new User());
+        TelegramScene homeScene = mock(TelegramScene.class);
+        when(sceneRegistry.findByKey("home")).thenReturn(Optional.of(homeScene));
+        when(homeScene.render(any())).thenReturn(SceneOutput.sendHtml("home", null));
+
+        router.route(update);
+
+        verify(homeScene).render(any());
+        verify(renderer, times(2)).dispatch(any(SceneOutput.class), eq(100L), any());
+    }
+
+    @Test
     void routesCallbackToScene() {
         Update update = callbackUpdate(100L, "notif:read:550e8400-e29b-41d4-a716-446655440000");
         mockAuthorized(100L, 42L);
@@ -93,11 +112,11 @@ class TelegramRouterTest {
         Update update = callbackUpdate(100L, "junk:action");
         mockAuthorized(100L, 42L);
         when(sceneRegistry.findByKey("junk")).thenReturn(Optional.empty());
-        when(homeMenuScene.renderUnknown(any())).thenReturn(SceneOutput.send("Неизвестная команда", null));
+        when(homeScene.renderUnknown(any())).thenReturn(SceneOutput.send("Неизвестная команда", null));
 
         router.route(update);
 
-        verify(homeMenuScene).renderUnknown(any());
+        verify(homeScene).renderUnknown(any());
     }
 
     @Test
@@ -113,15 +132,32 @@ class TelegramRouterTest {
     }
 
     @Test
+    void routesBackCallback_toParentSceneViaEdit() {
+        Update update = callbackUpdate(100L, "qr_details:back");
+        mockAuthorized(100L, 42L);
+        TelegramScene detailsScene = mock(TelegramScene.class);
+        TelegramScene listScene = mock(TelegramScene.class);
+        when(detailsScene.parentKey()).thenReturn("qr_list");
+        when(sceneRegistry.findByKey("qr_details")).thenReturn(Optional.of(detailsScene));
+        when(sceneRegistry.findByKey("qr_list")).thenReturn(Optional.of(listScene));
+        when(listScene.render(any(TelegramUpdateContext.class))).thenReturn(SceneOutput.sendHtml("list", null));
+
+        router.route(update);
+
+        verify(listScene).render(any(TelegramUpdateContext.class));
+        verify(renderer).dispatch(any(SceneOutput.class), eq(100L), any());
+    }
+
+    @Test
     void unknownText_fallsBackToHomeUnknown() {
         Update update = textUpdate(100L, "random text");
         mockAuthorized(100L, 42L);
         when(sceneRegistry.findByText("random text")).thenReturn(Optional.empty());
-        when(homeMenuScene.renderUnknown(any())).thenReturn(SceneOutput.send("Неизвестная команда", null));
+        when(homeScene.renderUnknown(any())).thenReturn(SceneOutput.send("Неизвестная команда", null));
 
         router.route(update);
 
-        verify(homeMenuScene).renderUnknown(any());
+        verify(homeScene).renderUnknown(any());
     }
 
     private void mockAuthorized(long chatId, long userId) {

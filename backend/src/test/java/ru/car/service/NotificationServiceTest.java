@@ -8,6 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import ru.car.dto.NotificationDto;
+import ru.car.dto.PageParam;
 import ru.car.enums.NotificationStatus;
 import ru.car.enums.QrStatus;
 import ru.car.exception.BadRequestException;
@@ -25,6 +26,7 @@ import ru.car.test.builder.QrBuilder;
 import ru.car.test.util.SecurityTestUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -545,6 +547,19 @@ class NotificationServiceTest extends BaseUnitTest {
     }
 
     @Nested
+    @DisplayName("countUnreadByUserId")
+    class CountUnreadByUserId {
+
+        @Test
+        @DisplayName("should delegate to repository and return count")
+        void countUnreadByUserId_delegatesToRepo() {
+            when(notificationRepository.findCountByUserIdAndStatus(1L, NotificationStatus.UNREAD))
+                    .thenReturn(5);
+            assertThat(notificationService.countUnreadByUserId(1L)).isEqualTo(5);
+        }
+    }
+
+    @Nested
     @DisplayName("delete")
     class Delete {
 
@@ -577,6 +592,61 @@ class NotificationServiceTest extends BaseUnitTest {
             boolean result = notificationService.delete(inputDto);
 
             assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("findForBot")
+    class FindForBot {
+
+        @Test
+        @DisplayName("all tab, no qr filter: delegates to findPageByUserId")
+        void findForBot_allTab_noQrFilter_delegatesToFindPageByUserId() {
+            PageParam page = PageParam.builder().page(0).size(5).build();
+            when(notificationRepository.findPageByUserId(42L, page))
+                    .thenReturn(List.of(new Notification()));
+
+            var result = notificationService.findForBot(42L, "all", null, page);
+
+            assertThat(result).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("unread tab, no qr filter: delegates to findPageByUserIdAndStatus")
+        void findForBot_unreadTab_filtersByStatus() {
+            PageParam page = PageParam.builder().page(0).size(5).build();
+            when(notificationRepository.findPageByUserIdAndStatus(42L, NotificationStatus.UNREAD, page))
+                    .thenReturn(List.of(new Notification()));
+
+            var result = notificationService.findForBot(42L, "unread", null, page);
+
+            assertThat(result).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("all tab, with qr filter: delegates to findPageByUserIdAndQrId")
+        void findForBot_withQrFilter_allTab_delegatesToByQrId() {
+            PageParam page = PageParam.builder().page(0).size(5).build();
+            UUID qrId = UUID.randomUUID();
+            when(notificationRepository.findPageByUserIdAndQrId(42L, qrId, page))
+                    .thenReturn(List.of(new Notification()));
+
+            var result = notificationService.findForBot(42L, "all", qrId, page);
+
+            assertThat(result).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("unread tab, with qr filter: delegates to findPageByUserIdAndStatusAndQrId")
+        void findForBot_withQrFilter_unreadTab_delegatesToByStatusAndQrId() {
+            PageParam page = PageParam.builder().page(0).size(5).build();
+            UUID qrId = UUID.randomUUID();
+            when(notificationRepository.findPageByUserIdAndStatusAndQrId(42L, NotificationStatus.UNREAD, qrId, page))
+                    .thenReturn(List.of(new Notification()));
+
+            var result = notificationService.findForBot(42L, "unread", qrId, page);
+
+            assertThat(result).hasSize(1);
         }
     }
 }

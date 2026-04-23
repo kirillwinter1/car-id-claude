@@ -1,13 +1,13 @@
 # F8: Telegram-бот (уведомления + команды)
 
-**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-21 (Phase 2.1 рефакторинг)
+**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-23 (Phase 2.2 — перенос базовых экранов)
 
 ## Что делает
 
 Telegram-бот решает две задачи:
 
 1. **Канал доставки уведомлений** — если пользователь привязал Telegram в настройках ([F6](../FEATURES.md)), входящие события по его QR-кодам приходят ему в личку с кнопкой «отметить прочитанным».
-2. **Интерактивный помощник** — даёт пользователю посмотреть свои QR-коды, выгрузить PDF-файл c QR, создать временный QR без захода в приложение. Для админов — быстрая суточная статистика.
+2. **Копия мобильного приложения** (Phase 2.2) — главный экран со счётчиками, список меток с деталями и PNG QR-кодом, список уведомлений с вкладками/пагинацией/фильтром по QR, настройки каналов (три свитча), профиль (выход/удаление аккаунта), временный QR (PNG). Навигация edit-in-place, HTML + эмодзи, `← Назад` через `parentKey()`.
 
 В продакшене — `@car_id_ru_bot`, в dev — `@car_id_test_bot`. Запуск — long polling (не webhook).
 
@@ -17,7 +17,7 @@ Telegram-бот решает две задачи:
 
 1. Пользователь пишет боту → бот видит, что `telegram_dialog_id` незнаком.
 2. Бот запрашивает контакт (кнопка «поделиться контактом»).
-3. Если телефон есть в таблице `users` — записывается `notification_setting.telegram_dialog_id = chatId`, выдаётся приветствие + меню.
+3. Если телефон есть в таблице `users` — записывается `notification_setting.telegram_dialog_id = chatId`, выдаётся приветствие; reply-клавиатура убирается через `ReplyKeyboardRemove`, роутер автоматически рендерит `HomeScene` отдельным сообщением.
 4. Если телефона нет — бот предлагает скачать мобильное приложение.
 
 ### Получение уведомления
@@ -28,12 +28,30 @@ Telegram-бот решает две задачи:
 
 ### QR-коды через бота
 
-1. Пользователь жмёт кнопку «QR-коды» → бот отвечает списком inline-кнопок (имя + серийный номер).
-2. Клик по QR → асинхронная генерация PDF (`PdfConverter.create(SvgUtils.getSvgText)`) → отправка документом `qr.pdf`.
+1. Главный экран → кнопка «🚘 Мои метки · N» → `QrListScene` рендерит HTML-карточки со статусными эмодзи (🟢 активна, ⏸ отключена, 🕐 временная, ⚪ новая) и списком inline-кнопок.
+2. Клик по карточке → `QrDetailsScene`: имя, seqNumber, статус, дата активации + кнопки «Показать код», «История уведомлений», «Отключить», «← К списку», «🏠 Главное».
+3. «Показать код» → PNG через `QrUtils.generateQRCodeImage` (ZXing + логотип из `png/car-id.png`) с HTML-подписью «<b>{name}</b> · №{seq}». PDF больше не генерируется.
+4. «Отключить» → подтверждение → `QrService.disable(id)` (soft-delete через `QrRepository.delete(qr)`).
+
+### Уведомления через бота
+
+1. Главный экран → «🔔 Уведомления · N новых» → `NotificationListScene` с вкладками (все/непрочитанные), пагинацией (5/стр), опциональным фильтром по QR (из `QrDetailsScene`).
+2. Клик по элементу → делегируется в `NotificationMarkReadScene.renderNotification` — карточка + кнопка «отметить прочитанным».
+
+### Настройки каналов
+
+1. Главный экран → «⚙️ Настройки» → `NotificationSettingsScene` показывает текущее состояние трёх каналов (🔔 push / 📞 звонок / ✈️ telegram).
+2. Клик по кнопке канала → `NotificationSettingService.toggleChannel(userId, channel)` инвертирует значение → перерендер.
+
+### Профиль
+
+1. Главный экран → «👤 Профиль» → `ProfileScene` показывает телефон (формат `+7 XXX XXX-XX-XX`) и роль.
+2. «🚪 Выйти» → подтверждение → `NotificationSettingRepository.clearTelegramLink(userId)` обнуляет `telegram_enabled` и `telegram_dialog_id`.
+3. «🗑 Удалить аккаунт» → подтверждение → `UserService.deleteUser(userId)`.
 
 ### Временный QR
 
-1. Кнопка «Временный QR» → `QrService.createTemporaryQr(userId)` → возвращает ссылку `{url}/qr/{id}` с TTL 2 часа (см. [F3](../FEATURES.md)).
+1. Главный экран → «➕ Временный QR» → `TemporaryQrScene`: `QrService.createTemporaryQr(userId)` → PNG через `QrUtils.generateQRCodeImage` с caption, в котором ссылка `{url}/qr/{id}`. TTL ~[1h, 3h] (см. [F3](../FEATURES.md)).
 
 ### Админ-меню
 
@@ -43,16 +61,22 @@ Telegram-бот решает две задачи:
 
 **Telegram Bot API** через `org.telegram.telegrambots` (long polling, `DefaultBotSession`).
 
-**Команды-кнопки** (константы в `scene/impl/*` + конфиг i18n):
+**Callback-формат:** `<scene>:<action>[:<args>]`, 64 байта бюджет (Telegram). Парсер — `CallbackData.parse`. Служебное `<scene>:back` → роутер находит `parent = scene.parentKey()` и рендерит его edit-in-place.
 
-| Источник | Значение | Где живёт |
-|----------|----------|-----------|
-| reply-кнопка «QR-коды» | `tg.home.btn.qrs` | `HomeMenuScene.mainKeyboard()` |
-| reply-кнопка «Временный QR» | `tg.home.btn.temp_qr` | `HomeMenuScene.mainKeyboard()` |
-| reply-кнопка «поделиться контактом» | `tg.auth.btn.share_contact` | `TelegramAuthorizationService.contactKeyboard()` |
-| callback `qr:list` | — | `QrListScene.ACTION_LIST` |
-| callback `qr:pdf:<uuid>` | — | `QrListScene.ACTION_PDF` |
-| callback `notif:read:<uuid>` | — | `NotificationMarkReadScene.ACTION_READ` |
+**Ключи сцен и основные callbacks** (Phase 2.2):
+
+| Scene | Key | Действия |
+|-------|-----|---------|
+| `HomeScene` | `home` | `home:open` |
+| `QrListScene` | `qr_list` | `qr_list:open` |
+| `QrDetailsScene` | `qr_details` | `qr_details:open:<uuid>`, `qr_details:show:<uuid>`, `qr_details:disable:<uuid>`, `qr_details:disable_confirm:<uuid>`, `qr_details:back` |
+| `NotificationListScene` | `notif_list` | `notif_list:open:<tab>:<page>[:qr:<uuid>]`, `notif_list:view:<uuid>`, `notif_list:back` |
+| `NotificationMarkReadScene` | `notif` | `notif:read:<uuid>` |
+| `NotificationSettingsScene` | `settings` | `settings:open`, `settings:toggle:<push\|call\|telegram>`, `settings:back` |
+| `ProfileScene` | `profile` | `profile:open`, `profile:logout`, `profile:logout_confirm`, `profile:delete`, `profile:delete_confirm`, `profile:back` |
+| `TemporaryQrScene` | `temp_qr` | `temp_qr:create` |
+
+reply-кнопка «поделиться контактом» (`tg.auth.btn.share_contact`) — единственная reply-клавиатура, живёт только до привязки; после привязки `ReplyKeyboardRemove`.
 
 **Реализация интерфейса `Sender`** — бот участвует в веере каналов доставки через `MessageService.asyncSend` наряду с Firebase и Zvonok.
 
@@ -60,17 +84,20 @@ Telegram-бот решает две задачи:
 
 ## Реализация
 
-**Backend (пакет `ru.car.service.message.telegram`, после рефакторинга Phase 2.1):**
-- `TelegramBotService` — тонкий транспорт: `extends TelegramLongPollingBot implements Sender, TelegramTransport`. Делегирует входящие `Update` в `TelegramRouter`; исходящие уведомления рендерит через `NotificationMarkReadScene` → `TelegramRenderer`.
-- `TelegramRouter` (пакет `router/`) — entry-point: pre-auth (через `TelegramAuthorizationService`) | callback-роутинг (через `SceneRegistry` по `CallbackData.scene()`) | text-триггеры (через `SceneRegistry` по `canHandleText`).
-- `TelegramAuthorizationService` (пакет `auth/`) — shareContact flow с привязкой `telegram_dialog_id`.
+**Backend (пакет `ru.car.service.message.telegram`, Phase 2.1 + 2.2):**
+- `TelegramBotService` — тонкий транспорт: `extends TelegramLongPollingBot implements Sender, TelegramTransport`. Делегирует входящие `Update` в `TelegramRouter`; исходящие уведомления рендерит через `NotificationMarkReadScene` → `TelegramRenderer`. Умеет `sendPhoto`.
+- `TelegramRouter` (пакет `router/`) — entry-point: pre-auth (через `TelegramAuthorizationService`, после привязки автоматически рендерит `HomeScene`) | callback-роутинг (через `SceneRegistry` по `CallbackData.scene()`, служебное `:back` → родительская сцена через `parentKey()`) | text-триггеры (через `SceneRegistry` по `canHandleText`). Fallback — `HomeScene.renderUnknown`.
+- `TelegramAuthorizationService` (пакет `auth/`) — shareContact flow с привязкой `telegram_dialog_id`; welcome возвращает `ReplyKeyboardRemove`.
 - `SceneRegistry` (пакет `scene/`) — Spring DI собирает `List<TelegramScene>` и мапит по `key()`.
-- Сцены (пакет `scene/impl/`): `HomeMenuScene` (fallback + reply-клавиатура), `QrListScene`, `TemporaryQrScene`, `NotificationMarkReadScene`.
-- `TelegramRenderer`, `TelegramMessages` (пакет `render/`) — сборка `SendMessage`/`EditMessage` из `SceneOutput` + i18n обёртка над `MessageSource`.
-- `TelegramTransport` (пакет `transport/`) — интерфейс транспорта, реализован `TelegramBotService`.
+- Сцены (пакет `scene/impl/`): `HomeScene` (главное меню со счётчиками + fallback `renderUnknown`), `QrListScene` (HTML-карточки), `QrDetailsScene` (детали + PNG + disable), `NotificationListScene` (вкладки + пагинация + qr-фильтр), `NotificationMarkReadScene` (карточка уведомления), `NotificationSettingsScene` (три свитча), `ProfileScene` (телефон + выход + удаление), `TemporaryQrScene` (PNG).
+- `SceneOutput` (record) — `{text, inlineKeyboard, replyKeyboard, editInPlace, parseMode, photo, caption}`; фабрики `send/sendHtml/edit/editHtml/editMarkup/photo/noop`.
+- `TelegramScene` — `key()`, `canHandleText()`, `render()`, `handle()`, `parentKey()` default = `"home"`.
+- `TelegramRenderer`, `TelegramMessages` (пакет `render/`) — сборка `SendMessage`/`EditMessageText`/`EditMessageReplyMarkup`/`SendPhoto` из `SceneOutput` + i18n обёртка над `MessageSource`.
+- `TelegramTransport` (пакет `transport/`) — интерфейс транспорта (text + photo), реализован `TelegramBotService`.
 - `TelegramConfig` — простой `@PostConstruct` с `bot.init()` (циклическая зависимость устранена, setter-hack удалён).
 - `TelegramProperties` — `@ConfigurationProperties("telegram")`.
-- Тексты — в `backend/src/main/resources/i18n/telegram_ru.properties`.
+- `QrUtils.generateQRCodeImage` — PNG через ZXing с логотипом из `resources/png/car-id.png` (25 КБ).
+- Тексты — в `backend/src/main/resources/i18n/telegram_ru.properties` (~120 ключей).
 
 **БД (таблица `notification_setting`):**
 - `telegram_enabled boolean not null default false` — канал включён.
@@ -86,7 +113,10 @@ Telegram-бот решает две задачи:
 - **`TelegramBotService` совмещает `Sender` и `TelegramTransport`** — привело к 3 `@Lazy`-инъекциям на сценах/рендерере для разрыва DI-цикла. Кандидат на последующий refactor (см. [TECH_DEBT A19](../TECH_DEBT.md)).
 - **JWT без expiration** (общий для проекта) — авторизация бота тоже «вечная» через `telegram_dialog_id`.
 
-См. историю рефакторинга: [`review/2026-04-21_TG_2.1_ARCHITECTURE.md`](../review/2026-04-21_TG_2.1_ARCHITECTURE.md), план: [`review/2026-04-21_TG_2.1_PLAN.md`](../review/2026-04-21_TG_2.1_PLAN.md).
+См. историю рефакторинга:
+- Phase 2.1 (архитектура): [`review/2026-04-21_TG_2.1_ARCHITECTURE.md`](../review/2026-04-21_TG_2.1_ARCHITECTURE.md) · [`review/2026-04-21_TG_2.1_PLAN.md`](../review/2026-04-21_TG_2.1_PLAN.md).
+- Phase 2.2 (базовые экраны): [`review/2026-04-21_TG_2.2_BASIC_SCREENS.md`](../review/2026-04-21_TG_2.2_BASIC_SCREENS.md) · [`review/2026-04-21_TG_2.2_PLAN.md`](../review/2026-04-21_TG_2.2_PLAN.md).
+- Мастер-эпик: [`review/2026-04-21_TELEGRAM_EPIC.md`](../review/2026-04-21_TELEGRAM_EPIC.md).
 
 ## Ссылки
 
