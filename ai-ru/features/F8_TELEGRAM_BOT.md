@@ -1,13 +1,13 @@
 # F8: Telegram-бот (уведомления + команды)
 
-**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-23 (Phase 2.2 — перенос базовых экранов)
+**Статус:** ✅ В проде · **Последний апдейт:** 2026-04-23 (Phase 2.3 — Report/Support/Marketplace)
 
 ## Что делает
 
 Telegram-бот решает две задачи:
 
 1. **Канал доставки уведомлений** — если пользователь привязал Telegram в настройках ([F6](../FEATURES.md)), входящие события по его QR-кодам приходят ему в личку с кнопкой «отметить прочитанным».
-2. **Копия мобильного приложения** (Phase 2.2) — главный экран со счётчиками, список меток с деталями и PNG QR-кодом, список уведомлений с вкладками/пагинацией/фильтром по QR, настройки каналов (три свитча), профиль (выход/удаление аккаунта), временный QR (PNG). Навигация edit-in-place, HTML + эмодзи, `← Назад` через `parentKey()`.
+2. **Копия мобильного приложения** (Phase 2.2 + 2.3) — главный экран со счётчиками, список меток с деталями и PNG QR-кодом, список уведомлений с вкладками/пагинацией/фильтром по QR, настройки каналов (три свитча), профиль (выход/удаление аккаунта), временный QR (PNG), **сообщение о событии** (выбор QR → причина → комментарий → отправка), **поддержка** (одношаговый feedback через `FeedbackChannels.TELEGRAM`), **маркетплейсы** (ссылки Wildberries/Ozon). Навигация edit-in-place, HTML + эмодзи, `← Назад` через `parentKey()`. Многошаговые формы через `SceneStateRegistry` (in-memory, TTL 5 мин).
 
 В продакшене — `@car_id_ru_bot`, в dev — `@car_id_test_bot`. Запуск — long polling (не webhook).
 
@@ -53,6 +53,25 @@ Telegram-бот решает две задачи:
 
 1. Главный экран → «➕ Временный QR» → `TemporaryQrScene`: `QrService.createTemporaryQr(userId)` → PNG через `QrUtils.generateQRCodeImage` с caption, в котором ссылка `{url}/qr/{id}`. TTL ~[1h, 3h] (см. [F3](../FEATURES.md)).
 
+### Сообщение о событии (Phase 2.3)
+
+1. Главный экран → «📝 Сообщить о событии» → `ReportEventScene`: список активных/временных меток пользователя (через `QrRepository.findByUserId`).
+2. Клик по метке → экран выбора причины (`ReasonDictionaryService.findAll()`).
+3. Клик по причине → приглашение ввести текст; `SceneStateRegistry.put(chatId, "report", "text", [qrId, reasonId])`.
+4. Пользователь пишет текст → роутер через pending-state делегирует в `ReportEventScene.handleText` → `SceneStateRegistry.updateDraft` + экран preview со всеми тремя полями и кнопками «✅ Отправить / ✏️ Изменить текст / ← Изменить причину».
+5. «✅ Отправить» → `NotificationFacade.send(NotificationDto{qrId, reasonId, text, senderId=ctx.userId()})` → clear state → сообщение «✅ Событие отправлено».
+6. Альтернативный вход: из `QrDetailsScene` → «📝 Сообщить о событии» → `report:start:<qrId>` → шаг 2 сразу.
+
+### Поддержка (Phase 2.3)
+
+1. Главный экран → «💬 Поддержка» → `SupportScene`: приглашение ввести текст; ставит pending-state.
+2. Пользователь пишет сообщение → `handleText` → `FeedbackFacade.send(FeedbackDto{email="{phone}@telegram", text, channel=TELEGRAM})` → `MessageService.sendMail` → `TelegramBotService.sendFeedback` пересылает в admin-канал → clear state → сообщение «💬 Спасибо!».
+
+### Маркетплейсы (Phase 2.3)
+
+1. Главный экран → «🛒 Где купить стикеры» → `MarketplaceScene`: `MarketplaceService.get()` → HTML-экран с `InlineKeyboardButton.url(...)` на Wildberries/Ozon (Telegram открывает ссылки в браузере, не шлёт callback).
+2. Если `activity=false` или оба URL пусты → сообщение «Пока недоступно».
+
 ### Админ-меню
 
 **Удалено 2026-04-21 в Phase 2.1.** Мониторинг счётчиков (пользователи, активации QR, отправленные/прочитанные уведомления) теперь доступен через Prometheus/Grafana на проде.
@@ -63,7 +82,7 @@ Telegram-бот решает две задачи:
 
 **Callback-формат:** `<scene>:<action>[:<args>]`, 64 байта бюджет (Telegram). Парсер — `CallbackData.parse`. Служебное `<scene>:back` → роутер находит `parent = scene.parentKey()` и рендерит его edit-in-place.
 
-**Ключи сцен и основные callbacks** (Phase 2.2):
+**Ключи сцен и основные callbacks** (Phase 2.2 + 2.3):
 
 | Scene | Key | Действия |
 |-------|-----|---------|
@@ -75,6 +94,11 @@ Telegram-бот решает две задачи:
 | `NotificationSettingsScene` | `settings` | `settings:open`, `settings:toggle:<push\|call\|telegram>`, `settings:back` |
 | `ProfileScene` | `profile` | `profile:open`, `profile:logout`, `profile:logout_confirm`, `profile:delete`, `profile:delete_confirm`, `profile:back` |
 | `TemporaryQrScene` | `temp_qr` | `temp_qr:create` |
+| `ReportEventScene` | `report` | `report:start[:<uuid>]`, `report:qr:<uuid>`, `report:reason:<uuid>:<reasonId>`, `report:edit_text:<uuid>:<reasonId>`, `report:submit`, `report:back` |
+| `SupportScene` | `support` | `support:start`, `support:back` |
+| `MarketplaceScene` | `marketplace` | `marketplace:open`, `marketplace:back` (кнопки WB/Ozon — `url=`, callback'ов не шлют) |
+
+**Multi-step формы** — через `SceneStateRegistry` (in-memory `ConcurrentHashMap<chatId, PendingText>`, TTL 5 мин). Роутер в `handleText` сначала смотрит `peek(chatId)`; если есть pending — делегирует в `scene.handleText(text, ctx, args)`. Используется в `ReportEventScene` (хранит qrId+reasonId между шагами выбора причины и ввода текста) и `SupportScene` (одношаговая форма).
 
 reply-кнопка «поделиться контактом» (`tg.auth.btn.share_contact`) — единственная reply-клавиатура, живёт только до привязки; после привязки `ReplyKeyboardRemove`.
 
@@ -84,20 +108,21 @@ reply-кнопка «поделиться контактом» (`tg.auth.btn.sha
 
 ## Реализация
 
-**Backend (пакет `ru.car.service.message.telegram`, Phase 2.1 + 2.2):**
+**Backend (пакет `ru.car.service.message.telegram`, Phase 2.1–2.3):**
 - `TelegramBotService` — тонкий транспорт: `extends TelegramLongPollingBot implements Sender, TelegramTransport`. Делегирует входящие `Update` в `TelegramRouter`; исходящие уведомления рендерит через `NotificationMarkReadScene` → `TelegramRenderer`. Умеет `sendPhoto`.
-- `TelegramRouter` (пакет `router/`) — entry-point: pre-auth (через `TelegramAuthorizationService`, после привязки автоматически рендерит `HomeScene`) | callback-роутинг (через `SceneRegistry` по `CallbackData.scene()`, служебное `:back` → родительская сцена через `parentKey()`) | text-триггеры (через `SceneRegistry` по `canHandleText`). Fallback — `HomeScene.renderUnknown`.
+- `TelegramRouter` (пакет `router/`) — entry-point: pre-auth (через `TelegramAuthorizationService`, после привязки автоматически рендерит `HomeScene`) | callback-роутинг (через `SceneRegistry` по `CallbackData.scene()`, служебное `:back` → родительская сцена через `parentKey()`) | text-триггеры (pending-state через `SceneStateRegistry.peek` → `scene.handleText`, иначе `SceneRegistry.findByText`). Fallback — `HomeScene.renderUnknown`.
 - `TelegramAuthorizationService` (пакет `auth/`) — shareContact flow с привязкой `telegram_dialog_id`; welcome возвращает `ReplyKeyboardRemove`.
 - `SceneRegistry` (пакет `scene/`) — Spring DI собирает `List<TelegramScene>` и мапит по `key()`.
-- Сцены (пакет `scene/impl/`): `HomeScene` (главное меню со счётчиками + fallback `renderUnknown`), `QrListScene` (HTML-карточки), `QrDetailsScene` (детали + PNG + disable), `NotificationListScene` (вкладки + пагинация + qr-фильтр), `NotificationMarkReadScene` (карточка уведомления), `NotificationSettingsScene` (три свитча), `ProfileScene` (телефон + выход + удаление), `TemporaryQrScene` (PNG).
+- `SceneStateRegistry` (пакет `scene/state/`) — in-memory `ConcurrentHashMap<chatId, PendingText>` с TTL 5 мин для multi-step форм.
+- Сцены (пакет `scene/impl/`): `HomeScene` (главное меню со счётчиками + fallback `renderUnknown`), `QrListScene` (HTML-карточки), `QrDetailsScene` (детали + PNG + disable + «сообщить о событии»), `NotificationListScene` (вкладки + пагинация + qr-фильтр), `NotificationMarkReadScene` (карточка уведомления), `NotificationSettingsScene` (три свитча), `ProfileScene` (телефон + выход + удаление), `TemporaryQrScene` (PNG), `ReportEventScene` (4 шага + pending-state), `SupportScene` (одношаговый feedback), `MarketplaceScene` (WB/Ozon URL-кнопки).
 - `SceneOutput` (record) — `{text, inlineKeyboard, replyKeyboard, editInPlace, parseMode, photo, caption}`; фабрики `send/sendHtml/edit/editHtml/editMarkup/photo/noop`.
-- `TelegramScene` — `key()`, `canHandleText()`, `render()`, `handle()`, `parentKey()` default = `"home"`.
+- `TelegramScene` — `key()`, `canHandleText()`, `render()`, `handle()`, `parentKey()` default = `"home"`, `handleText()` default = noop.
 - `TelegramRenderer`, `TelegramMessages` (пакет `render/`) — сборка `SendMessage`/`EditMessageText`/`EditMessageReplyMarkup`/`SendPhoto` из `SceneOutput` + i18n обёртка над `MessageSource`.
 - `TelegramTransport` (пакет `transport/`) — интерфейс транспорта (text + photo), реализован `TelegramBotService`.
 - `TelegramConfig` — простой `@PostConstruct` с `bot.init()` (циклическая зависимость устранена, setter-hack удалён).
 - `TelegramProperties` — `@ConfigurationProperties("telegram")`.
 - `QrUtils.generateQRCodeImage` — PNG через ZXing с логотипом из `resources/png/car-id.png` (25 КБ).
-- Тексты — в `backend/src/main/resources/i18n/telegram_ru.properties` (~120 ключей).
+- Тексты — в `backend/src/main/resources/i18n/telegram_ru.properties` (~160 ключей).
 
 **БД (таблица `notification_setting`):**
 - `telegram_enabled boolean not null default false` — канал включён.
@@ -116,6 +141,7 @@ reply-кнопка «поделиться контактом» (`tg.auth.btn.sha
 См. историю рефакторинга:
 - Phase 2.1 (архитектура): [`review/2026-04-21_TG_2.1_ARCHITECTURE.md`](../review/2026-04-21_TG_2.1_ARCHITECTURE.md) · [`review/2026-04-21_TG_2.1_PLAN.md`](../review/2026-04-21_TG_2.1_PLAN.md).
 - Phase 2.2 (базовые экраны): [`review/2026-04-21_TG_2.2_BASIC_SCREENS.md`](../review/2026-04-21_TG_2.2_BASIC_SCREENS.md) · [`review/2026-04-21_TG_2.2_PLAN.md`](../review/2026-04-21_TG_2.2_PLAN.md).
+- Phase 2.3 (user actions): [`review/2026-04-21_TG_2.3_USER_ACTIONS.md`](../review/2026-04-21_TG_2.3_USER_ACTIONS.md) · [`review/2026-04-21_TG_2.3_PLAN.md`](../review/2026-04-21_TG_2.3_PLAN.md).
 - Мастер-эпик: [`review/2026-04-21_TELEGRAM_EPIC.md`](../review/2026-04-21_TELEGRAM_EPIC.md).
 
 ## Ссылки
