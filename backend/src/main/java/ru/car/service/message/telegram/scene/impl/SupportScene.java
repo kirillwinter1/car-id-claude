@@ -1,6 +1,7 @@
 package ru.car.service.message.telegram.scene.impl;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -27,7 +28,7 @@ public class SupportScene implements TelegramScene {
     private final SceneStateRegistry stateRegistry;
     private final TelegramMessages messages;
 
-    public SupportScene(FeedbackFacade feedbackFacade,
+    public SupportScene(@Lazy FeedbackFacade feedbackFacade,
                         SceneStateRegistry stateRegistry,
                         TelegramMessages messages) {
         this.feedbackFacade = feedbackFacade;
