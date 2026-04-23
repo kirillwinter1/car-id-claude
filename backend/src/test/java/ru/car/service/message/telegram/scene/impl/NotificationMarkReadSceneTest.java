@@ -7,7 +7,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
 import ru.car.dto.NotificationDto;
+import ru.car.enums.NotificationStatus;
+import ru.car.model.Notification;
 import ru.car.model.NotificationSetting;
+import ru.car.model.Qr;
+import ru.car.model.ReasonDictionary;
 import ru.car.service.NotificationFacade;
 import ru.car.service.NotificationService;
 import ru.car.service.message.TextMessage;
@@ -16,6 +20,7 @@ import ru.car.service.message.telegram.router.CallbackData;
 import ru.car.service.message.telegram.router.TelegramUpdateContext;
 import ru.car.service.message.telegram.scene.SceneOutput;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,28 +47,132 @@ class NotificationMarkReadSceneTest {
     }
 
     @Test
-    void renderForTextMessage_includesMarkReadButton_whenUnread() {
-        UUID id = UUID.randomUUID();
-        when(notificationService.shouldShowMarkAsReadButton(id)).thenReturn(true);
+    void renderNotification_buildsHtmlCardWithEmojiAndBothButtons() {
+        UUID notifId = UUID.randomUUID();
+        UUID qrId = UUID.randomUUID();
+        Qr qr = new Qr();
+        qr.setId(qrId);
+        qr.setName("Audi Q5");
+        qr.setSeqNumber(145L);
+        ReasonDictionary reason = ReasonDictionary.builder().id(3L).description("Произошло ДТП").build();
+        Notification n = new Notification();
+        n.setId(notifId);
+        n.setQrId(qrId);
+        n.setQr(qr);
+        n.setReasonId(3L);
+        n.setReason(reason);
+        n.setText("Сработала сигнализация");
+        n.setCreatedDate(LocalDateTime.of(2026, 3, 23, 10, 35));
+        n.setStatus(NotificationStatus.UNREAD);
 
-        SceneOutput output = scene.renderNotification(textMessage(id, "Привет"));
+        when(notificationService.findByIdOrThrowNotFound(notifId)).thenReturn(n);
+        when(notificationService.shouldShowMarkAsReadButton(notifId)).thenReturn(true);
 
-        assertThat(output.text()).isEqualTo("Привет");
-        assertThat(output.inlineKeyboard()).isNotNull();
-        assertThat(output.inlineKeyboard().getKeyboard()).hasSize(1);
-        assertThat(output.inlineKeyboard().getKeyboard().get(0).get(0).getText()).isEqualTo("отметить прочитанным");
-        assertThat(output.inlineKeyboard().getKeyboard().get(0).get(0).getCallbackData()).isEqualTo("notif:read:" + id);
+        SceneOutput out = scene.renderNotification(textMessage(notifId, "ignored"));
+
+        assertThat(out.parseMode()).isEqualTo("HTML");
+        assertThat(out.text())
+            .contains("🚨")
+            .contains("<b>Audi Q5</b>")
+            .contains("№145")
+            .contains("Произошло ДТП")
+            .contains("Сработала сигнализация")
+            .contains("23 марта")
+            .contains("10:35");
+
+        String callbacks = out.inlineKeyboard().getKeyboard().stream()
+            .flatMap(List::stream)
+            .map(org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton::getCallbackData)
+            .reduce("", (a, b) -> a + "|" + b);
+        assertThat(callbacks).contains("notif:read:" + notifId);
+        assertThat(callbacks).contains("qr_details:open:" + qrId);
     }
 
     @Test
-    void renderForTextMessage_noButton_whenAlreadyRead() {
-        UUID id = UUID.randomUUID();
-        when(notificationService.shouldShowMarkAsReadButton(id)).thenReturn(false);
+    void renderNotification_unknownReason_usesFallbackEmoji() {
+        UUID notifId = UUID.randomUUID();
+        UUID qrId = UUID.randomUUID();
+        Qr qr = new Qr();
+        qr.setId(qrId);
+        qr.setName("X");
+        qr.setSeqNumber(1L);
+        Notification n = new Notification();
+        n.setId(notifId);
+        n.setQrId(qrId);
+        n.setQr(qr);
+        n.setReasonId(9999L); // unknown
+        n.setText("something");
+        n.setCreatedDate(LocalDateTime.now());
 
-        SceneOutput output = scene.renderNotification(textMessage(id, "Привет"));
+        when(notificationService.findByIdOrThrowNotFound(notifId)).thenReturn(n);
+        when(notificationService.shouldShowMarkAsReadButton(notifId)).thenReturn(true);
 
-        assertThat(output.text()).isEqualTo("Привет");
-        assertThat(output.inlineKeyboard()).isNull();
+        SceneOutput out = scene.renderNotification(textMessage(notifId, "ignored"));
+
+        assertThat(out.text()).startsWith("🚗");
+    }
+
+    @Test
+    void renderNotification_alreadyRead_onlyToQrButton() {
+        UUID notifId = UUID.randomUUID();
+        UUID qrId = UUID.randomUUID();
+        Qr qr = new Qr();
+        qr.setId(qrId);
+        qr.setName("X");
+        qr.setSeqNumber(1L);
+        Notification n = new Notification();
+        n.setId(notifId);
+        n.setQrId(qrId);
+        n.setQr(qr);
+        n.setReasonId(1L);
+        n.setText("t");
+        n.setCreatedDate(LocalDateTime.now());
+
+        when(notificationService.findByIdOrThrowNotFound(notifId)).thenReturn(n);
+        when(notificationService.shouldShowMarkAsReadButton(notifId)).thenReturn(false);
+
+        SceneOutput out = scene.renderNotification(textMessage(notifId, "ignored"));
+
+        String callbacks = out.inlineKeyboard().getKeyboard().stream()
+            .flatMap(List::stream)
+            .map(b -> b.getCallbackData())
+            .reduce("", (a, b) -> a + "|" + b);
+        assertThat(callbacks).doesNotContain("notif:read");
+        assertThat(callbacks).contains("qr_details:open:" + qrId);
+    }
+
+    @Test
+    void renderNotification_missingQr_usesFallbackName() {
+        UUID notifId = UUID.randomUUID();
+        Notification n = new Notification();
+        n.setId(notifId);
+        n.setReasonId(1L);
+        n.setText("t");
+        n.setCreatedDate(LocalDateTime.now());
+
+        when(notificationService.findByIdOrThrowNotFound(notifId)).thenReturn(n);
+        when(notificationService.shouldShowMarkAsReadButton(notifId)).thenReturn(true);
+
+        SceneOutput out = scene.renderNotification(textMessage(notifId, "ignored"));
+
+        assertThat(out.text()).contains("Метка");
+        String callbacks = out.inlineKeyboard().getKeyboard().stream()
+            .flatMap(List::stream)
+            .map(b -> b.getCallbackData())
+            .reduce("", (a, b) -> a + "|" + b);
+        assertThat(callbacks).doesNotContain("qr_details:open");
+    }
+
+    @Test
+    void renderNotification_whenServiceThrows_fallsBackToPlainText() {
+        UUID notifId = UUID.randomUUID();
+        when(notificationService.findByIdOrThrowNotFound(notifId))
+            .thenThrow(new RuntimeException("db down"));
+        when(notificationService.shouldShowMarkAsReadButton(notifId)).thenReturn(true);
+
+        SceneOutput out = scene.renderNotification(textMessage(notifId, "Fallback text"));
+
+        assertThat(out.text()).isEqualTo("Fallback text");
     }
 
     @Test
