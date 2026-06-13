@@ -72,8 +72,9 @@ SSH_CMD="ssh ${SSH_OPTS[*]}"
 REMOTE="${SSH_USER}@${SSH_HOST}"
 
 # rsync: исключаем dev-мусор, не относящийся к боевому сайту
-RSYNC_OPTS=(-az --human-readable
-            --exclude '.github' --exclude '.idea' --exclude '.DS_Store')
+RSYNC_OPTS=(-az --human-readable --no-owner --no-group
+            --exclude '.github' --exclude '.idea' --exclude '.git'
+            --exclude '.DS_Store' --exclude '._*')
 [ "$DO_DELETE" = "1" ] && RSYNC_OPTS+=(--delete)
 
 echo "──────────────────────────────────────────────"
