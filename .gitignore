@@ -22,6 +22,9 @@ target/
 # Dependencies
 node_modules/
 
+# Superpowers brainstorm sessions (visual companion)
+.superpowers/
+
 # Environment & Secrets
 .env
 .env/
