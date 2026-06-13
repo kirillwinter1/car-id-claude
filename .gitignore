@@ -42,3 +42,6 @@ node_modules/
 *.pem
 *.cer
 key.properties
+
+# Deploy connection config (IP/user/ssh key — из ops.inf, вне git)
+/deploy/frontend.env
