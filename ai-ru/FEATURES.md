@@ -38,6 +38,7 @@
 | BF2 | Мульти-канальная авторизация и уведомления (Telegram / MAX / ...) | Phase 3 | [BF2](backlog/BF2_MULTI_CHANNEL_AUTH.md) |
 | BF3 | Редизайн лендинга car-id.ru | Phase 4 | [BF3](backlog/BF3_LANDING_REDESIGN.md) |
 | BF4 | Аренда машиномест в ЖК (эпик) | Phase 5 | [BF4](backlog/BF4_PARKING_RENTAL_EPIC.md) |
+| BF5 | «Позвонить владельцу» — раскрытие номера при неответе | после стабилизации | [BF5](backlog/BF5_OWNER_PHONE_REVEAL.md) |
 
 ## Рефакторинги / ревью
 
