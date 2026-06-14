@@ -27,6 +27,11 @@ async function checkQr() {
                 showError(response.error_message);
                 return;
             }
+
+            // Метка существует, но отправить по ней уведомление нельзя (NEW / DELETED).
+            // Без этого пользователь видел бы дефолтную страницу «О сервисе» без объяснений.
+            showQrUnavailable(response.status);
+            return;
         } else {
             showError(response.status);
         }
@@ -80,6 +85,28 @@ async function createMsg() {
         }
     } catch (err) {
         showError(err);
+    }
+}
+
+// Метка непригодна для отправки — показываем понятный статус вместо немой «О сервисе».
+function showQrUnavailable(status) {
+    const messages = {
+        NEW: {
+            title: "Метка ещё не активирована",
+            text: "Эта метка пока не привязана к владельцу. Если метка ваша — активируйте её в приложении Car ID.",
+        },
+        DELETED: {
+            title: "Метка отключена",
+            text: "По этой метке больше нельзя отправить уведомление — владелец её отвязал.",
+        },
+    };
+    const m = messages[status] || {
+        title: "Метка недоступна",
+        text: "По этой метке сейчас нельзя отправить уведомление.",
+    };
+    const about = document.querySelector("#about");
+    if (about) {
+        about.innerHTML = `<h2>${m.title}</h2><p>${m.text}</p>`;
     }
 }
 

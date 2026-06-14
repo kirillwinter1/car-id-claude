@@ -477,33 +477,60 @@ body:has(.modal) {
 }
 
 /* notice ======================= */
+.notice {
+    text-align: center;
+    padding: 16px 0 40px;
+}
+
 .notice .img {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 120px;
-    margin-bottom: 40px;
-
-    .spinner {
-        -webkit-animation: spin 5s linear infinite;
-        animation: spin 5s ease-in-out infinite;
-    }
+    height: 96px;
+    margin-bottom: 16px;
 }
 
-@-webkit-keyframes spin {
-    0% {
-        -webkit-transform: rotate(0deg);
-    }
-    100% {
-        -webkit-transform: rotate(360deg);
-    }
+/* строка статуса доставки под подтверждением «отправлено» */
+.delivery-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+    color: var(--black-f);
 }
 
-@keyframes spin {
-    0% {
-        transform: rotate(0deg);
+/* спокойная анимация «идёт процесс» вместо спиннера-крутилки,
+   который читался как «зависло» (см. отзыв на Ozon) */
+.dots {
+    display: inline-flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--blue-normal);
+    animation: dot-pulse 1.4s ease-in-out infinite both;
+}
+
+.dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes dot-pulse {
+    0%, 80%, 100% {
+        opacity: 0.25;
+        transform: scale(0.8);
     }
-    100% {
-        transform: rotate(360deg);
+    40% {
+        opacity: 1;
+        transform: scale(1);
     }
 }
