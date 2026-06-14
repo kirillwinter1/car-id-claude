@@ -1,4 +1,4 @@
-import { waitingForReadingNotice, readMessageNotice } from "./systemMessages.js";
+import { sentMessageNotice, readMessageNotice, STATUS_CALLING } from "./systemMessages.js";
 import { openModal } from "./script.js";
 
 const carEventsContainer = document.querySelector("#radio-btns");
@@ -6,8 +6,13 @@ const submitBtn = document.querySelector("#submit");
 const modalContainer = document.querySelector(".modal-container");
 const sectionSendMsg = document.querySelector("#send-msg");
 
+// Бэкенд звонит владельцу через 30 сек, если уведомление всё ещё не прочитано
+// (MessageService.asyncSend). Зеркалим этот момент в тексте статуса.
+const CALL_ESCALATION_DELAY_MS = 30000;
+
 let carEventList = [];
 let timeoutId = 0;
+let escalationTimerId = 0;
 const notificationId = window.location.pathname.slice(14, window.location.pathname.length);
 
 buildEventList();
@@ -42,6 +47,19 @@ function readMsg(event) {
     carEventList.map((event) => (+event.id === +userChoice.id ? sendMsg(event.id) : false));
 }
 
+// Мгновенный отклик на клик, пока летит запрос: кнопка не должна выглядеть «мёртвой».
+function setSubmitLoading(isLoading) {
+    if (!submitBtn) return;
+    if (isLoading) {
+        submitBtn.dataset.label = submitBtn.textContent;
+        submitBtn.textContent = "Отправляем…";
+        submitBtn.setAttribute("disabled", "");
+    } else {
+        submitBtn.textContent = submitBtn.dataset.label || "Сообщить";
+        submitBtn.removeAttribute("disabled");
+    }
+}
+
 async function sendMsg(eventId) {
     const fetchUrl = window.location.origin + "/api/report/updateDraft";
 
@@ -51,6 +69,8 @@ async function sendMsg(eventId) {
         text: "",
         status: "SEND"
     };
+
+    setSubmitLoading(true);
 
     try {
         let response = await fetch(fetchUrl, {
@@ -66,18 +86,38 @@ async function sendMsg(eventId) {
             let answer = await response.json();
 
             if (answer.notification_id) {
+                showSentConfirmation();
                 checkMsgStatus();
             } else if (answer.error_code === "SEND_TIMEOUT") {
+                setSubmitLoading(false);
                 showError(answer.error_message, "Чуть помедленнее");
             } else if (answer.error_code) {
                 showError(answer.error_message, "Упс... Уже исправляем", closeErrorModal);
-            } else showError(answer);
+            } else {
+                setSubmitLoading(false);
+                showError(answer);
+            }
         } else {
+            setSubmitLoading(false);
             showError(response.status);
         }
     } catch (err) {
+        setSubmitLoading(false);
         showError(err);
     }
+}
+
+// Показываем подтверждение СРАЗУ по 200 OK (не дожидаясь второго запроса статуса)
+// и проматываем наверх — иначе подмена контента происходит вне поля зрения,
+// пользователь думает, что «зависло», и закрывает страницу (см. отзыв на Ozon).
+function showSentConfirmation() {
+    sectionSendMsg.innerHTML = sentMessageNotice;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    escalationTimerId = setTimeout(() => {
+        const statusText = document.querySelector("#delivery-status .status-text");
+        if (statusText) statusText.textContent = STATUS_CALLING;
+    }, CALL_ESCALATION_DELAY_MS);
 }
 
 async function checkMsgStatus() {
@@ -88,18 +128,22 @@ async function checkMsgStatus() {
         if (fetchAnswer.ok) {
             let msgStatus = await fetchAnswer.json();
 
-            if (!["UNREAD", "READ"].includes(msgStatus.status)) showError(msgStatus.status);
+            if (!["UNREAD", "READ"].includes(msgStatus.status)) {
+                showError(msgStatus.status);
+                return;
+            }
 
             if (msgStatus.status === "UNREAD") {
-                sectionSendMsg.innerHTML = waitingForReadingNotice;
                 timeoutId = setTimeout(() => checkMsgStatus(), 5000);
             }
             if (msgStatus.status === "READ") {
                 clearTimeout(timeoutId);
+                clearTimeout(escalationTimerId);
                 sectionSendMsg.innerHTML = readMessageNotice;
+                window.scrollTo({ top: 0, behavior: "smooth" });
             }
         } else {
-            showError(response.status);
+            showError(fetchAnswer.status);
         }
     } catch (err) {
         showError(err);
