@@ -18,6 +18,7 @@ import ru.car.model.Qr;
 import ru.car.model.ReasonDictionary;
 import ru.car.repository.NotificationRepository;
 import ru.car.repository.NotificationSettingRepository;
+import ru.car.repository.UserRepository;
 import ru.car.model.NotificationSetting;
 import ru.car.service.security.AuthService;
 
@@ -38,6 +39,10 @@ public class NotificationService {
     private final AuthService authService;
     private final MetricService metricService;
     private final NotificationSettingRepository notificationSettingRepository;
+    private final UserRepository userRepository;
+
+    /** BF5: задержка перед показом номера владельца прохожему (сек). */
+    private static final long REVEAL_DELAY_SEC = 60;
 
 
     @Transactional
@@ -81,7 +86,23 @@ public class NotificationService {
                 .notificationId(id)
                 .status(notification.getStatus())
                 .callEnabled(callEnabled)
+                .ownerPhone(resolveOwnerPhone(notification, setting))
                 .build();
+    }
+
+    /** BF5: номер владельца прохожему — только если владелец разрешил и прошёл порог задержки.
+     *  Показывается независимо от read/unread. */
+    private String resolveOwnerPhone(Notification notification, NotificationSetting setting) {
+        if (setting == null || !Boolean.TRUE.equals(setting.getShowPhoneOnUnreachable())) {
+            return null;
+        }
+        if (notification.getCreatedDate() == null
+                || notification.getCreatedDate().isAfter(LocalDateTime.now().minusSeconds(REVEAL_DELAY_SEC))) {
+            return null;
+        }
+        return userRepository.findById(setting.getUserId())
+                .map(u -> "+" + u.getPhoneNumber())
+                .orElse(null);
     }
 
     @Transactional
