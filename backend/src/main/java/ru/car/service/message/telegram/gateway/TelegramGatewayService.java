@@ -58,6 +58,29 @@ public class TelegramGatewayService {
         return null;
     }
 
+    /** Доставляет наш код через Telegram. @return true, если Gateway принял (ok=true). */
+    public boolean sendCode(String phoneNumber, String code, String requestId) {
+        try {
+            java.util.Map<String, String> params = new java.util.HashMap<>();
+            params.put("phone_number", "+" + phoneNumber);
+            params.put("code", code);
+            params.put("ttl", String.valueOf(properties.getTtl()));
+            if (requestId != null) {
+                params.put("request_id", requestId);
+            }
+            GatewayResponse resp = post("sendVerificationMessage", params);
+            boolean ok = resp != null && resp.isOk();
+            if (!ok) {
+                log.warn("Telegram Gateway sendVerificationMessage не ok для {}: {}",
+                        phoneNumber, resp == null ? "null" : resp.getError());
+            }
+            return ok;
+        } catch (Exception e) {
+            log.warn("Telegram Gateway sendVerificationMessage ошибка для {}: {}", phoneNumber, e.getMessage());
+            return false;
+        }
+    }
+
     private GatewayResponse post(String method, Map<String, String> params) {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
