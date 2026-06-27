@@ -17,6 +17,7 @@ import ru.car.service.message.firebase.FirebaseService;
 import ru.car.service.message.mail.MailSender;
 import ru.car.service.message.sms.SmsService;
 import ru.car.service.message.telegram.TelegramBotService;
+import ru.car.service.message.telegram.gateway.TelegramGatewayService;
 import ru.car.service.message.zvonok.ZvonokService;
 
 import java.security.SecureRandom;
@@ -42,6 +43,7 @@ public class MessageService {
     private final NotificationService notificationService;
     private final AuthenticationCodeService authenticationCodeService;
     private final MetricService metricService;
+    private final TelegramGatewayService telegramGatewayService;
 
     public String sendSmsCode(String telephone, String code) {
         log.info(String.format("%s %s", telephone, code));
@@ -69,6 +71,24 @@ public class MessageService {
             }, CompletableFuture.delayedExecutor(30L, TimeUnit.SECONDS));
 
         return code;
+    }
+
+    public record LoginCodeResult(String code, String channel) {}
+
+    /** Код входа: сперва пробуем Telegram Gateway (по номеру), иначе текущий flashcall/SMS. */
+    public LoginCodeResult sendLoginCode(String telephone) {
+        if (telegramGatewayService.isEnabled()) {
+            String code = generateLoginCode();
+            String requestId = telegramGatewayService.checkSendAbility(telephone);
+            if (requestId != null && telegramGatewayService.sendCode(telephone, code, requestId)) {
+                return new LoginCodeResult(code, "telegram");
+            }
+        }
+        return new LoginCodeResult(sendFlashcallCode(telephone), "call");
+    }
+
+    private String generateLoginCode() {
+        return String.valueOf(RANDOM.nextInt(9000) + 1000);
     }
 
     public String sendCallCode(String telephone) {
