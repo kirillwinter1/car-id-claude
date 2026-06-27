@@ -18,6 +18,7 @@ import ru.car.service.message.telegram.gateway.dto.GatewayResponse;
 
 import java.net.InetSocketAddress;
 import java.net.Proxy;
+import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -61,7 +62,7 @@ public class TelegramGatewayService {
     /** Доставляет наш код через Telegram. @return true, если Gateway принял (ok=true). */
     public boolean sendCode(String phoneNumber, String code, String requestId) {
         try {
-            java.util.Map<String, String> params = new java.util.HashMap<>();
+            Map<String, String> params = new HashMap<>();
             params.put("phone_number", "+" + phoneNumber);
             params.put("code", code);
             params.put("ttl", String.valueOf(properties.getTtl()));
@@ -95,9 +96,12 @@ public class TelegramGatewayService {
 
     private static RestTemplate buildRestTemplate(TelegramProperties.Proxy proxy) {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        factory.setConnectTimeout(10000);
-        factory.setReadTimeout(20000);
+        // Короткие таймауты: два быстрых API-вызова на логин. Если Gateway/прокси недоступен,
+        // ограничиваем задержку перед фолбэком на flashcall/SMS (~5с, а не 30с).
+        factory.setConnectTimeout(5000);
+        factory.setReadTimeout(5000);
         if (proxy != null && proxy.isEnabled()) {
+            // Gateway-клиент ходит через SOCKS5 от sing-box (как и telegram.proxy). HTTP-прокси не поддерживаем.
             factory.setProxy(new Proxy(Proxy.Type.SOCKS,
                     new InetSocketAddress(proxy.getHost(), proxy.getPort())));
         }

@@ -15,6 +15,5 @@ public class TelegramGatewayProperties {
     private String accessToken;
     /** TTL кода в секундах (Gateway допускает 30..3600). */
     private Integer ttl = 300;
-    /** Длина генерируемого кода (совпадает с varchar(4) authentication_code). */
-    private Integer codeLength = 4;
+    // Длина кода не настраивается: фиксирована 4 знаками (схема authentication_code — varchar(4)).
 }

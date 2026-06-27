@@ -58,7 +58,6 @@ telegram:
     baseUrl: https://gatewayapi.telegram.org
     accessToken: ""
     ttl: 300
-    codeLength: 4
 
 firebase:
   url: https://fcm.googleapis.com/v1/projects/car-id-55917/messages:send

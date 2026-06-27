@@ -28,7 +28,7 @@ class TelegramGatewayServiceTest extends BaseUnitTest {
         restTemplate = new RestTemplate();
         server = MockRestServiceServer.createServer(restTemplate);
         TelegramGatewayProperties props = new TelegramGatewayProperties(
-                true, "https://gatewayapi.telegram.org", "TOKEN", 300, 4);
+                true, "https://gatewayapi.telegram.org", "TOKEN", 300);
         service = new TelegramGatewayService(props, restTemplate);
     }
 
