@@ -22,4 +22,9 @@ public class NotificationStatusDto {
      *  чтобы честно показывать «пробуем дозвониться» только когда звонок реально будет. */
     @JsonProperty("call_enabled")
     private Boolean callEnabled;
+
+    /** Реальный номер владельца для tel:-ссылки (BF5). Не null только если владелец разрешил
+     *  показ и прошёл порог задержки. Иначе null. */
+    @JsonProperty("owner_phone")
+    private String ownerPhone;
 }

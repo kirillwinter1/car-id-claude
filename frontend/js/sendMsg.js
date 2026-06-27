@@ -1,4 +1,4 @@
-import { sentMessageNotice, readMessageNotice, STATUS_CALLING } from "./systemMessages.js";
+import { sentMessageNotice, readMessageNotice, STATUS_CALLING, STATUS_CALL_OWNER } from "./systemMessages.js";
 import { openModal } from "./script.js";
 
 const carEventsContainer = document.querySelector("#radio-btns");
@@ -147,12 +147,29 @@ async function checkMsgStatus() {
                 sectionSendMsg.innerHTML = readMessageNotice;
                 window.scrollTo({ top: 0, behavior: "smooth" });
             }
+
+            // BF5: владелец разрешил показ номера и прошёл порог → даём прямую кнопку звонка.
+            // owner_phone приходит независимо от read/unread; рендерим после смены контента статуса.
+            if (msgStatus.owner_phone) {
+                showOwnerCallButton(msgStatus.owner_phone);
+            }
         } else {
             showError(fetchAnswer.status);
         }
     } catch (err) {
         showError(err);
     }
+}
+
+// BF5: кнопка прямого звонка владельцу. Идемпотентна (один раз на страницу).
+function showOwnerCallButton(phone) {
+    if (document.getElementById("owner-call-link")) return;
+    const a = document.createElement("a");
+    a.id = "owner-call-link";
+    a.href = "tel:" + phone;
+    a.className = "owner-call-button";
+    a.textContent = `${STATUS_CALL_OWNER}: ${phone}`;
+    sectionSendMsg.appendChild(a);
 }
 
 function showError(err, title, cb) {

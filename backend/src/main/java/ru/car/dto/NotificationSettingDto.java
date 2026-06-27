@@ -20,4 +20,7 @@ public class NotificationSettingDto {
     private Boolean active;
     @JsonProperty("telegram_dialog_id")
     private Long telegramDialogId;
+    /** BF5: показывать ли номер владельца прохожему при неответе. */
+    @JsonProperty("show_phone_on_unreachable")
+    private Boolean showPhoneOnUnreachable;
 }

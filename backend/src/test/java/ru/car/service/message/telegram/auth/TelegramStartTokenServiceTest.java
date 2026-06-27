@@ -30,8 +30,12 @@ class TelegramStartTokenServiceTest {
     @Test
     void verify_tamperedSignature_returnsEmpty() {
         String token = svc.sign(42L, Duration.ofMinutes(5));
-        char last = token.charAt(token.length() - 1);
-        String tampered = token.substring(0, token.length() - 1) + (last == 'A' ? 'B' : 'A');
+        // Меняем ПЕРВЫЙ символ base64-подписи (после '_'): в нём биты всегда значимы.
+        // Флип последнего символа был флейки — в нём «незначащие» биты неполной base64-группы
+        // могли декодироваться в те же байты HMAC, и подпись оставалась валидной.
+        int sep = token.indexOf('_');
+        char sigFirst = token.charAt(sep + 1);
+        String tampered = token.substring(0, sep + 1) + (sigFirst == 'A' ? 'B' : 'A') + token.substring(sep + 2);
         assertThat(svc.verify(tampered)).isEmpty();
     }
 

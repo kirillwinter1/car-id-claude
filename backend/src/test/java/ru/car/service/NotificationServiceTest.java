@@ -61,6 +61,9 @@ class NotificationServiceTest extends BaseUnitTest {
     @Mock
     private NotificationSettingRepository notificationSettingRepository;
 
+    @Mock
+    private ru.car.repository.UserRepository userRepository;
+
     @InjectMocks
     private NotificationService notificationService;
 
@@ -511,6 +514,116 @@ class NotificationServiceTest extends BaseUnitTest {
             var result = notificationService.getStatus(notificationId);
 
             assertThat(result.getCallEnabled()).isFalse();
+        }
+
+        @Test
+        @DisplayName("owner_phone: +телефон, если настройка ON и прошёл порог (даже при READ)")
+        void shouldReturnOwnerPhoneWhenAllowedAndDelayPassed() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId)
+                    .withQrId(qrId)
+                    .withStatus(NotificationStatus.READ)
+                    .withCreatedDate(LocalDateTime.now().minusSeconds(120))
+                    .build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId))
+                    .thenReturn(NotificationSetting.builder().userId(7L).showPhoneOnUnreachable(true).build());
+            when(userRepository.findById(7L))
+                    .thenReturn(Optional.of(ru.car.model.User.builder().id(7L).phoneNumber("79991234567").build()));
+
+            var result = notificationService.getStatus(notificationId);
+
+            assertThat(result.getOwnerPhone()).isEqualTo("+79991234567");
+        }
+
+        @Test
+        @DisplayName("owner_phone: null, если настройка OFF")
+        void shouldReturnNullOwnerPhoneWhenSettingOff() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId)
+                    .withQrId(qrId)
+                    .withCreatedDate(LocalDateTime.now().minusSeconds(120))
+                    .asUnread()
+                    .build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId))
+                    .thenReturn(NotificationSetting.builder().userId(7L).showPhoneOnUnreachable(false).build());
+
+            var result = notificationService.getStatus(notificationId);
+
+            assertThat(result.getOwnerPhone()).isNull();
+        }
+
+        @Test
+        @DisplayName("owner_phone: null, если порог ещё не прошёл")
+        void shouldReturnNullOwnerPhoneWhenTooEarly() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId)
+                    .withQrId(qrId)
+                    .withCreatedDate(LocalDateTime.now().minusSeconds(5))
+                    .asUnread()
+                    .build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId))
+                    .thenReturn(NotificationSetting.builder().userId(7L).showPhoneOnUnreachable(true).build());
+
+            var result = notificationService.getStatus(notificationId);
+
+            assertThat(result.getOwnerPhone()).isNull();
+        }
+
+        @Test
+        @DisplayName("owner_phone: null, если настроек нет (findByQrId == null)")
+        void shouldReturnNullOwnerPhoneWhenNoSetting() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId).withQrId(qrId)
+                    .withCreatedDate(LocalDateTime.now().minusSeconds(120))
+                    .asUnread().build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId)).thenReturn(null);
+
+            assertThat(notificationService.getStatus(notificationId).getOwnerPhone()).isNull();
+        }
+
+        @Test
+        @DisplayName("owner_phone: null, если created_date пустой")
+        void shouldReturnNullOwnerPhoneWhenCreatedDateNull() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId).withQrId(qrId)
+                    .withCreatedDate(null)
+                    .asUnread().build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId))
+                    .thenReturn(NotificationSetting.builder().userId(7L).showPhoneOnUnreachable(true).build());
+
+            assertThat(notificationService.getStatus(notificationId).getOwnerPhone()).isNull();
+        }
+
+        @Test
+        @DisplayName("owner_phone: null, если владелец не найден")
+        void shouldReturnNullOwnerPhoneWhenUserMissing() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId).withQrId(qrId)
+                    .withCreatedDate(LocalDateTime.now().minusSeconds(120))
+                    .asUnread().build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId))
+                    .thenReturn(NotificationSetting.builder().userId(7L).showPhoneOnUnreachable(true).build());
+            when(userRepository.findById(7L)).thenReturn(Optional.empty());
+
+            assertThat(notificationService.getStatus(notificationId).getOwnerPhone()).isNull();
         }
     }
 

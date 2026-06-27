@@ -93,4 +93,29 @@ class NotificationSettingRepositoryIntegrationTest extends BaseRepositoryTest {
             assertThat(result).isNull();
         }
     }
+
+    @Nested
+    @DisplayName("showPhoneOnUnreachable")
+    class ShowPhoneOnUnreachable {
+
+        @Test
+        @DisplayName("по умолчанию false и обновляется через update")
+        void defaultsFalseAndUpdatable() {
+            notificationSettingRepository.save(NotificationSetting.builder()
+                    .userId(userWithoutSettings)
+                    .pushEnabled(true)
+                    .callEnabled(false)
+                    .telegramEnabled(false)
+                    .active(true)
+                    .build());
+
+            NotificationSetting saved = notificationSettingRepository.findByUserId(userWithoutSettings);
+            assertThat(saved.getShowPhoneOnUnreachable()).isFalse();
+
+            saved.setShowPhoneOnUnreachable(true);
+            notificationSettingRepository.update(saved);
+
+            assertThat(notificationSettingRepository.findByUserId(userWithoutSettings).getShowPhoneOnUnreachable()).isTrue();
+        }
+    }
 }
