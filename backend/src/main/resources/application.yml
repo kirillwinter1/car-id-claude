@@ -44,6 +44,13 @@ telegram:
   token: ENC(FjY16UrUAcpcx22Bo68nnxDJvrVWb3AP0To7YYqDS7h2vRQmhxkgNu9Zlf463k7qz5+lZNftqC/847DpzZn1wr15vCNitzTD+WHBy7nC8l8=)
   feedbackChannelId: -1002067117934
   enable: true
+  # Прокси для api.telegram.org. Нужен только на проде в РФ (см. TECH_DEBT P17).
+  # Локальный SOCKS5 от sing-box; включается в application-prod.yml.
+  proxy:
+    enabled: false
+    type: SOCKS5
+    host: 127.0.0.1
+    port: 10808
 
 firebase:
   url: https://fcm.googleapis.com/v1/projects/car-id-55917/messages:send
