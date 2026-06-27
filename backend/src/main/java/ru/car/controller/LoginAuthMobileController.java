@@ -63,6 +63,19 @@ public class LoginAuthMobileController {
                 .build());
     }
 
+    @Operation(summary = "Login via VK ID")
+    @ApiResponses(@ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+            schema = @Schema(implementation = LoginAuthCodeRs.class))))
+    @PostMapping("user.login_vk")
+    public ResponseEntity<MobileRs<?>> loginVk(@RequestBody MobileRq<ru.car.dto.login_vk.LoginVkRqParams> request) {
+        log.debug("принят запрос на вход через VK");
+        return ResponseEntity.ok(MobileRs.builder()
+                .result("true")
+                .method(request.getMethod())
+                .params(loginAuthMobileService.loginVk(request.getParams()))
+                .build());
+    }
+
     @SecurityRequirements
     @Operation(summary = "Request for logout")
     @ApiResponses(@ApiResponse(responseCode = "200", content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
