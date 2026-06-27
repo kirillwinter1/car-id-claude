@@ -40,8 +40,8 @@ admin:
   code: 1111
 
 telegram:
-  bot: car_id_test_bot
-  token: ENC(FjY16UrUAcpcx22Bo68nnxDJvrVWb3AP0To7YYqDS7h2vRQmhxkgNu9Zlf463k7qz5+lZNftqC/847DpzZn1wr15vCNitzTD+WHBy7nC8l8=)
+  bot: car_id_test_2_bot
+  token: 8749266351:AAGyS_Eo2hJYXt35SWNt0DkDjKuobm1_lI8
   feedbackChannelId: -1002067117934
   enable: true
 
@@ -57,12 +57,12 @@ zvonok:
   flashcallCampaignId: 1017721904
   codeCallCampaignId: 362622836
   callCampaignId: 755592686
-  publicKeyApi: ENC(lkHud5XgI0Pe8Ro7Fc075R0uUp932nKf7zmx+qEKFVXPrqtKQenKEwnV4GA9IVcBXz3kXqK6SjF6ntdxzD/E92ZaUc5IWQgwI/+lW0i6w7Q=)
+  publicKeyApi: test-stub-not-used
 
 mail:
   receiverMail: help@car-id.ru
   senderMail: yatsenko.bv@yahoo.com
-  password: ENC(aRUpvgsDs4MPHdj1RYVbmicO/+fesMHXv1zsWDncTFhX/IIshJ3Al/7McAyNtQvNALJKUVn037oF9FV/yLI3Xw==)
+  password: test-stub-not-used
   smtpHost: smtp.mail.yahoo.com
 
 management:

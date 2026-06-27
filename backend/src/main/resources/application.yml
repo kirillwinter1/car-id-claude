@@ -59,6 +59,12 @@ telegram:
     accessToken: ""
     ttl: 300
 
+# Вход «Войти через VK» (VK ID). Включается на проде после регистрации приложения в VK. См. BF2.
+vk:
+  enabled: false
+  clientId: ""
+  userInfoUrl: https://id.vk.ru/oauth2/user_info
+
 firebase:
   url: https://fcm.googleapis.com/v1/projects/car-id-55917/messages:send
   sourceCredentials: /firebase/car-id-55917-601a5782f3a2.json

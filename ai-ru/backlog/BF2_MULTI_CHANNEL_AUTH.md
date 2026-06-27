@@ -1,7 +1,7 @@
 # BF2: Мульти-канальная авторизация и уведомления
 
 **Статус:** 📋 Planned (Phase 3 в [ROADMAP.md](../ROADMAP.md))
-**Последний апдейт:** 2026-06-27
+**Последний апдейт:** 2026-06-27 (добавлен дизайн VK ID — бэкенд)
 
 > **Уточнение 2026-06-27.** Под «Telegram-входом» есть **два разных механизма**, не путать:
 > - **Telegram Gateway API** — код подтверждения приходит в Telegram **по номеру телефона** (идентичность остаётся = телефон). Дешёвая замена SMS/flashcall, ложится на текущий телефонный вход, может выехать **независимо** от JWT-редизайна (P1). Детальный дизайн — раздел [«Telegram Gateway»](#telegram-gateway-api--код-по-номеру-near-term) ниже. **Это — ближайший инкремент.**
@@ -110,6 +110,51 @@
 - Зависимость от прокси: узел ляжет → Gateway недоступен → спасает SMS-фолбэк (вход продолжает работать).
 - UX: код приходит в чат «Verification Codes», а не от вашего бота — обязательно пояснить на экране ввода кода.
 - Баланс Gateway — мониторить `remaining_balance` из ответа; при нуле — авто-фолбэк на SMS.
+
+## VK ID — вход по номеру (near-term, бесплатно)
+
+**Что:** «Войти через VK» (OAuth 2.1 + PKCE) как бесплатный канал входа для РФ (~100 млн пользователей). VK ID **возвращает проверенный номер телефона** → маппим на текущих телефонных пользователей, идентичность и JWT не меняются. Дешевле Telegram Gateway (у того минимум пополнения $100). Сравнение каналов — см. историю BF2.
+
+**Решение по идентичности (2026-06-27):** **по номеру телефона** (`findOrCreateByPhoneNumber`), без нового столбца. Требует scope `phone` (может потребовать верификации приложения в VK; если scope недоступен — запасной путь по `vk_user_id`).
+
+**Объём шага 1: только бэкенд** (мобайл — следующим шагом).
+
+### Поток
+
+1. Приложение (Flutter, позже) получает VK `access_token` через `vkid_flutter_sdk`.
+2. `POST /api/user.login_vk {access_token}` (whitelist, без JWT).
+3. Бэкенд → VK `user_info` (`https://id.vk.ru/oauth2/user_info`, server-to-server, `access_token` + `client_id`) → проверенный телефон (+ VK user id). **Телефону с клиента не доверяем** — берём только из ответа VK.
+4. Нормализуем телефон к формату `7XXXXXXXXXX` → `findOrCreateByPhoneNumberAndActivate` → JWT (как `user.login_oauth_code`).
+
+### Компоненты (бэкенд)
+
+- `VkIdProperties` (`vk.*`): `enabled` (default false), `clientId`, `userInfoUrl` (default `https://id.vk.ru/oauth2/user_info`).
+- `VkIdService.fetchVerifiedPhone(accessToken)` → нормализованный телефон; кидает ошибку при невалидном токене / отсутствии телефона.
+- DTO ответа VK (`user_id`, `phone`); `LoginVkRqParams {access_token}`; ответ — `LoginAuthCodeRsParams {token}`.
+- Сервис входа: `VkIdService` → `userService.findOrCreateByPhoneNumberAndActivate` → `jwtService.generateToken`.
+- Whitelist `/api/user.login_vk` в `SecurityConfiguration`.
+- VK в РФ не блокируется → **прокси не нужен** (в отличие от Telegram).
+
+### Предусловия (ops, владелец)
+
+- Регистрация приложения в VK ID (id.vk.ru / RuStore Console): `client_id` (+ `client_secret` для мобайла), Android package + SHA-256, iOS bundle id, redirect URI.
+- Доступ к scope `phone` (возможна верификация приложения).
+
+### Тесты
+
+- `VkIdService` (MockRestServiceServer: ok с телефоном / ok без телефона → ошибка / невалидный токен / нормализация формата).
+- Сервис входа: мок VkIdService → findOrCreate → JWT.
+
+### Не входит (шаг 1)
+
+- Мобильная часть (`vkid_flutter_sdk` + кнопка «Войти через VK») — отдельный шаг после регистрации в VK.
+- Идентичность по `vk_user_id` — только если scope `phone` окажется недоступен.
+
+### Риски
+
+- scope `phone` может требовать верификации приложения в VK.
+- Точные имена полей в ответе `user_info` уточнить по доке VK при реализации.
+- Нормализация телефона: VK может вернуть `+7…`/`7…`/маску — привести к `7XXXXXXXXXX`.
 
 ## Связанное
 

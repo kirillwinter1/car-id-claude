@@ -23,7 +23,8 @@ public enum ErrorCode {
     UNKNOWN_TOKEN("UNKNOWN_TOKEN", "Получен неизвестный токен"),
     SEND_TIMEOUT("SEND_TIMEOUT", "Отправка следующего события возможна через %s сек."),
     TELEGRAM_AUTH_ERROR("TELEGRAM_AUTH_ERROR", "Авторизуйтесь в телеграм боте @%s, нажав кнопку %s или написав свой телефон текстом"),
-    SMS_ALREADY_SENT("SMS_ALREADY_SENT", "");
+    SMS_ALREADY_SENT("SMS_ALREADY_SENT", ""),
+    VK_AUTH_FAILED("VK_AUTH_FAILED", "Не удалось авторизоваться через VK");
 
     private final String code;
     private final String description;

@@ -51,6 +51,7 @@ public class SecurityConfiguration {
     private static final String[] AUTH_URL_WHITELIST = {
             "/api/user.login_oauth_mobile",
             "/api/user.login_oauth_code",
+            "/api/user.login_vk",
             "/api/feedback/send",
             "/api/version_control.get",
             "/api/marketplaces.get",

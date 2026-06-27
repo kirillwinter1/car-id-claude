@@ -9,6 +9,8 @@ import ru.car.dto.login_auth_mobile.LoginAuthMobileRqParams;
 import ru.car.dto.login_auth_mobile.LoginAuthMobileRsParams;
 import ru.car.dto.login_oauth_code.LoginAuthCodeRqParams;
 import ru.car.dto.login_oauth_code.LoginAuthCodeRsParams;
+import ru.car.dto.login_vk.LoginVkRqParams;
+import ru.car.service.vk.VkIdService;
 import ru.car.enums.ErrorCode;
 import ru.car.enums.Role;
 import ru.car.exception.BadRequestException;
@@ -33,6 +35,7 @@ public class LoginAuthMobileService {
     private final SecurityUserService securityUserService;
     private final FirebaseTokenRepository firebaseTokenRepository;
     private final AuthService authService;
+    private final VkIdService vkIdService;
 
 
 
@@ -66,6 +69,18 @@ public class LoginAuthMobileService {
                     .build();
         }
         throw new BadRequestException(ErrorCode.EMPTY_CODE.getDescription(), ErrorCode.AUTH_MOBILE_CODE_NOT_RIGHT);
+    }
+
+    @Transactional
+    public LoginAuthCodeRsParams loginVk(LoginVkRqParams params) {
+        if (!vkIdService.isEnabled()) {
+            throw new BadRequestException("VK login disabled", ErrorCode.VK_AUTH_FAILED);
+        }
+        String phone = vkIdService.fetchVerifiedPhone(params.getAccessToken());
+        User user = userService.findOrCreateByPhoneNumberAndActivate(phone, Role.ROLE_USER);
+        return LoginAuthCodeRsParams.builder()
+                .token(jwtService.generateToken(securityUserService.getDetails(user)))
+                .build();
     }
 
     private boolean isAdmin(LoginAuthCodeRqParams params) {
