@@ -14,4 +14,8 @@ public class LoginAuthMobileRsParams {
     @JsonProperty("time_to_next_request_sec")
     @Builder.Default
     private Integer timeToNextRequestSec = 30;
+
+    /** Канал доставки кода: telegram | call (нужно клиенту для текста «код в Telegram»). */
+    @JsonProperty("channel")
+    private String channel;
 }

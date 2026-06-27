@@ -43,9 +43,12 @@ public class LoginAuthMobileService {
             if (authenticationCodeService.isAlreadySent(telephone)) {
                 throw new BadRequestException("Code already sent to %s", ErrorCode.SMS_ALREADY_SENT, telephone);
             }
-            String sendCode = messageService.sendFlashcallCode(telephone);
-//            String sendCode = messageService.sendCallCode(telephone);
-            authenticationCodeService.create(telephone, sendCode);
+            MessageService.LoginCodeResult result = messageService.sendLoginCode(telephone);
+            authenticationCodeService.create(telephone, result.code());
+            return LoginAuthMobileRsParams.builder()
+                    .timeToNextRequestSec(ApplicationConstants.SMS_NEXT_REQUEST_TIMEOUT_IN_SEC)
+                    .channel(result.channel())
+                    .build();
         }
         return LoginAuthMobileRsParams.builder()
                 .timeToNextRequestSec(ApplicationConstants.SMS_NEXT_REQUEST_TIMEOUT_IN_SEC)
