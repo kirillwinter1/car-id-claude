@@ -51,6 +51,12 @@ telegram:
     type: SOCKS5
     host: 127.0.0.1
     port: 10808
+  gateway:
+    # Включить ПОСЛЕ получения access token на gateway.telegram.org и пополнения баланса.
+    # accessToken зашифровать Jasypt: ENC(...). Запросы идут через telegram.proxy (sing-box).
+    enabled: false
+    accessToken: ""
+    ttl: 300
 
 firebase:
   url: https://fcm.googleapis.com/v1/projects/car-id-55917/messages:send
