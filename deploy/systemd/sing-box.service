@@ -1,0 +1,17 @@
+[Unit]
+Description=sing-box (egress-прокси для Telegram, см. TECH_DEBT P17)
+Documentation=https://sing-box.sagernet.org
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Бинарник: /usr/local/bin/sing-box, конфиг с VLESS-Reality: /etc/sing-box/config.json (chmod 600, вне git).
+ExecStart=/usr/local/bin/sing-box run -c /etc/sing-box/config.json
+Restart=on-failure
+RestartSec=5
+LimitNOFILE=65535
+# Слушает только 127.0.0.1:10808 — наружу порт не публикуется.
+
+[Install]
+WantedBy=multi-user.target

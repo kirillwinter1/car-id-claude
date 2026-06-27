@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.telegram.telegrambots.bots.DefaultBotOptions;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendDocument;
@@ -40,11 +41,25 @@ public class TelegramBotService extends TelegramLongPollingBot implements Sender
                               TelegramRouter router,
                               NotificationMarkReadScene notificationMarkReadScene,
                               TelegramRenderer renderer) {
-        super(properties.getToken());
+        super(buildBotOptions(properties), properties.getToken());
         this.properties = properties;
         this.router = router;
         this.notificationMarkReadScene = notificationMarkReadScene;
         this.renderer = renderer;
+    }
+
+    /** Опции бота: при включённом прокси (телега заблокирована на проде, см. TECH_DEBT P17)
+     *  весь Telegram-трафик — long-polling и отправка — идёт через локальный SOCKS5. */
+    private static DefaultBotOptions buildBotOptions(TelegramProperties properties) {
+        DefaultBotOptions options = new DefaultBotOptions();
+        TelegramProperties.Proxy proxy = properties.getProxy();
+        if (proxy != null && proxy.isEnabled()) {
+            options.setProxyHost(proxy.getHost());
+            options.setProxyPort(proxy.getPort());
+            options.setProxyType(DefaultBotOptions.ProxyType.valueOf(proxy.getType()));
+            log.info("Telegram bot uses {} proxy {}:{}", proxy.getType(), proxy.getHost(), proxy.getPort());
+        }
+        return options;
     }
 
     public void init() throws TelegramApiException {

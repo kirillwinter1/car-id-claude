@@ -29,7 +29,7 @@ class TelegramAuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        TelegramProperties props = new TelegramProperties("car_id_test_bot", "tok", 0L, true);
+        TelegramProperties props = new TelegramProperties("car_id_test_bot", "tok", 0L, true, new TelegramProperties.Proxy());
         controller = new TelegramAuthController(tokenService, props, authService);
     }
 
