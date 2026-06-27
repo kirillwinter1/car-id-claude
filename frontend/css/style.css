@@ -534,3 +534,22 @@ body:has(.modal) {
         transform: scale(1);
     }
 }
+
+/* BF5: кнопка прямого звонка владельцу на экране статуса */
+.owner-call-button {
+    display: block;
+    margin: 16px auto 0;
+    max-width: 360px;
+    padding: 16px 20px;
+    border-radius: 24px;
+    background-color: var(--orange-button);
+    color: #fff;
+    font-weight: 600;
+    font-size: 1.06rem;
+    text-align: center;
+    text-decoration: none;
+}
+
+.owner-call-button:active {
+    opacity: 0.85;
+}
