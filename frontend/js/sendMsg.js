@@ -13,6 +13,7 @@ const CALL_ESCALATION_DELAY_MS = 30000;
 let carEventList = [];
 let timeoutId = 0;
 let escalationTimerId = 0;
+let callEnabled = false; // включён ли у владельца голосовой звонок (из status-эндпоинта, Тир 2)
 const notificationId = window.location.pathname.slice(14, window.location.pathname.length);
 
 buildEventList();
@@ -115,6 +116,9 @@ function showSentConfirmation() {
     window.scrollTo({ top: 0, behavior: "smooth" });
 
     escalationTimerId = setTimeout(() => {
+        // Показываем «пробуем дозвониться» только если у владельца реально включён
+        // звонок — иначе это обещание звонка, которого не будет (Тир 2).
+        if (!callEnabled) return;
         const statusText = document.querySelector("#delivery-status .status-text");
         if (statusText) statusText.textContent = STATUS_CALLING;
     }, CALL_ESCALATION_DELAY_MS);
@@ -127,6 +131,7 @@ async function checkMsgStatus() {
         let fetchAnswer = await fetch(fetchUrl);
         if (fetchAnswer.ok) {
             let msgStatus = await fetchAnswer.json();
+            callEnabled = msgStatus.call_enabled === true;
 
             if (!["UNREAD", "READ"].includes(msgStatus.status)) {
                 showError(msgStatus.status);

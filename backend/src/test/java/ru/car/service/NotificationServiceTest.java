@@ -16,9 +16,11 @@ import ru.car.exception.ForbiddenException;
 import ru.car.exception.NotFoundException;
 import ru.car.mapper.NotificationDtoMapper;
 import ru.car.model.Notification;
+import ru.car.model.NotificationSetting;
 import ru.car.model.Qr;
 import ru.car.model.ReasonDictionary;
 import ru.car.repository.NotificationRepository;
+import ru.car.repository.NotificationSettingRepository;
 import ru.car.service.security.AuthService;
 import ru.car.test.base.BaseUnitTest;
 import ru.car.test.builder.NotificationBuilder;
@@ -55,6 +57,9 @@ class NotificationServiceTest extends BaseUnitTest {
 
     @Mock
     private MetricService metricService;
+
+    @Mock
+    private NotificationSettingRepository notificationSettingRepository;
 
     @InjectMocks
     private NotificationService notificationService;
@@ -468,6 +473,44 @@ class NotificationServiceTest extends BaseUnitTest {
 
             assertThat(result.getNotificationId()).isEqualTo(notificationId);
             assertThat(result.getStatus()).isEqualTo(NotificationStatus.UNREAD);
+        }
+
+        @Test
+        @DisplayName("should expose call_enabled=true when owner has calls enabled")
+        void shouldExposeCallEnabledWhenOwnerHasCallsEnabled() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId)
+                    .withQrId(qrId)
+                    .asUnread()
+                    .build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId))
+                    .thenReturn(NotificationSetting.builder().callEnabled(true).build());
+
+            var result = notificationService.getStatus(notificationId);
+
+            assertThat(result.getCallEnabled()).isTrue();
+        }
+
+        @Test
+        @DisplayName("should expose call_enabled=false when owner has calls disabled")
+        void shouldExposeCallDisabledWhenOwnerHasCallsDisabled() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId)
+                    .withQrId(qrId)
+                    .asUnread()
+                    .build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId))
+                    .thenReturn(NotificationSetting.builder().callEnabled(false).build());
+
+            var result = notificationService.getStatus(notificationId);
+
+            assertThat(result.getCallEnabled()).isFalse();
         }
     }
 

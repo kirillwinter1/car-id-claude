@@ -17,6 +17,8 @@ import ru.car.model.Notification;
 import ru.car.model.Qr;
 import ru.car.model.ReasonDictionary;
 import ru.car.repository.NotificationRepository;
+import ru.car.repository.NotificationSettingRepository;
+import ru.car.model.NotificationSetting;
 import ru.car.service.security.AuthService;
 
 import java.time.LocalDateTime;
@@ -35,6 +37,7 @@ public class NotificationService {
     private final QrService qrService;
     private final AuthService authService;
     private final MetricService metricService;
+    private final NotificationSettingRepository notificationSettingRepository;
 
 
     @Transactional
@@ -72,9 +75,12 @@ public class NotificationService {
     @Transactional
     public NotificationStatusDto getStatus(UUID id) {
         Notification notification = findByIdOrThrowNotFound(id);
+        NotificationSetting setting = notificationSettingRepository.findByQrId(notification.getQrId());
+        boolean callEnabled = setting != null && Boolean.TRUE.equals(setting.getCallEnabled());
         return NotificationStatusDto.builder()
                 .notificationId(id)
                 .status(notification.getStatus())
+                .callEnabled(callEnabled)
                 .build();
     }
 

@@ -56,7 +56,10 @@ public class NotificationSettingRepository {
 
     public NotificationSetting findByQrId(UUID qrId) {
         MapSqlParameterSource paramSource = new MapSqlParameterSource("qrId", qrId);
-        return namedParameterJdbcTemplate.queryForObject(SELECT_BY_QR_ID, paramSource, BeanPropertyRowMapper.newInstance(NotificationSetting.class));
+        // query(...) вместо queryForObject(...): для QR без настроек владельца (или несуществующего QR)
+        // возвращаем null, а не бросаем EmptyResultDataAccessException — иначе getStatus отдаёт 500.
+        return namedParameterJdbcTemplate.query(SELECT_BY_QR_ID, paramSource, BeanPropertyRowMapper.newInstance(NotificationSetting.class))
+                .stream().findFirst().orElse(null);
     }
 
     public Boolean existsByTelegramDialogId(long chatId) {

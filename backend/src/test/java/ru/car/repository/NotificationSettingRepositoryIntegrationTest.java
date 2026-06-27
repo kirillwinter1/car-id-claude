@@ -1,0 +1,96 @@
+package ru.car.repository;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import ru.car.enums.QrStatus;
+import ru.car.model.NotificationSetting;
+import ru.car.model.Qr;
+import ru.car.test.base.BaseRepositoryTest;
+
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+@DisplayName("NotificationSettingRepository Integration Tests")
+class NotificationSettingRepositoryIntegrationTest extends BaseRepositoryTest {
+
+    @Autowired
+    private NotificationSettingRepository notificationSettingRepository;
+
+    @Autowired
+    private QrRepository qrRepository;
+
+    private Long userWithSettings;
+    private Long userWithoutSettings;
+
+    @BeforeEach
+    void setUp() {
+        userWithSettings = createTestUser("79001112233");
+        userWithoutSettings = createTestUser("79004445566");
+        notificationSettingRepository.save(NotificationSetting.builder()
+                .userId(userWithSettings)
+                .pushEnabled(true)
+                .callEnabled(true)
+                .telegramEnabled(false)
+                .active(true)
+                .build());
+    }
+
+    private Long createTestUser(String phone) {
+        jdbcTemplate.update(
+                "INSERT INTO users (phone_number, role, active) VALUES (:phone, 'ROLE_USER', true)",
+                new MapSqlParameterSource("phone", phone));
+        return jdbcTemplate.queryForObject(
+                "SELECT id FROM users WHERE phone_number = :phone",
+                new MapSqlParameterSource("phone", phone), Long.class);
+    }
+
+    private UUID createQrForUser(Long userId) {
+        return qrRepository.save(Qr.builder()
+                .batchId(1L)
+                .name("QR")
+                .printed(false)
+                .status(QrStatus.ACTIVE)
+                .userId(userId)
+                .build()).getId();
+    }
+
+    @Nested
+    @DisplayName("findByQrId")
+    class FindByQrId {
+
+        @Test
+        @DisplayName("should return settings when QR owner has settings")
+        void shouldReturnSettingsWhenOwnerHasSettings() {
+            UUID qrId = createQrForUser(userWithSettings);
+
+            NotificationSetting result = notificationSettingRepository.findByQrId(qrId);
+
+            assertThat(result).isNotNull();
+            assertThat(result.getUserId()).isEqualTo(userWithSettings);
+            assertThat(result.getCallEnabled()).isTrue();
+        }
+
+        @Test
+        @DisplayName("should return null when QR owner has no settings")
+        void shouldReturnNullWhenOwnerHasNoSettings() {
+            UUID qrId = createQrForUser(userWithoutSettings);
+
+            NotificationSetting result = notificationSettingRepository.findByQrId(qrId);
+
+            assertThat(result).isNull();
+        }
+
+        @Test
+        @DisplayName("should return null when QR does not exist")
+        void shouldReturnNullWhenQrDoesNotExist() {
+            NotificationSetting result = notificationSettingRepository.findByQrId(UUID.randomUUID());
+
+            assertThat(result).isNull();
+        }
+    }
+}

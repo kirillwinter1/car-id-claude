@@ -17,4 +17,9 @@ public class NotificationStatusDto {
     @JsonProperty("notification_id")
     private UUID notificationId;
     private NotificationStatus status;
+
+    /** Запланирован ли у владельца голосовой звонок (callEnabled). Нужно фронту,
+     *  чтобы честно показывать «пробуем дозвониться» только когда звонок реально будет. */
+    @JsonProperty("call_enabled")
+    private Boolean callEnabled;
 }
