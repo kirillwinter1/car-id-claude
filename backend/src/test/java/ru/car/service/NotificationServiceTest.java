@@ -577,6 +577,54 @@ class NotificationServiceTest extends BaseUnitTest {
 
             assertThat(result.getOwnerPhone()).isNull();
         }
+
+        @Test
+        @DisplayName("owner_phone: null, если настроек нет (findByQrId == null)")
+        void shouldReturnNullOwnerPhoneWhenNoSetting() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId).withQrId(qrId)
+                    .withCreatedDate(LocalDateTime.now().minusSeconds(120))
+                    .asUnread().build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId)).thenReturn(null);
+
+            assertThat(notificationService.getStatus(notificationId).getOwnerPhone()).isNull();
+        }
+
+        @Test
+        @DisplayName("owner_phone: null, если created_date пустой")
+        void shouldReturnNullOwnerPhoneWhenCreatedDateNull() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId).withQrId(qrId)
+                    .withCreatedDate(null)
+                    .asUnread().build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId))
+                    .thenReturn(NotificationSetting.builder().userId(7L).showPhoneOnUnreachable(true).build());
+
+            assertThat(notificationService.getStatus(notificationId).getOwnerPhone()).isNull();
+        }
+
+        @Test
+        @DisplayName("owner_phone: null, если владелец не найден")
+        void shouldReturnNullOwnerPhoneWhenUserMissing() {
+            UUID notificationId = UUID.randomUUID();
+            UUID qrId = UUID.randomUUID();
+            Notification notification = NotificationBuilder.aNotification()
+                    .withId(notificationId).withQrId(qrId)
+                    .withCreatedDate(LocalDateTime.now().minusSeconds(120))
+                    .asUnread().build();
+            when(notificationRepository.findById(notificationId)).thenReturn(Optional.of(notification));
+            when(notificationSettingRepository.findByQrId(qrId))
+                    .thenReturn(NotificationSetting.builder().userId(7L).showPhoneOnUnreachable(true).build());
+            when(userRepository.findById(7L)).thenReturn(Optional.empty());
+
+            assertThat(notificationService.getStatus(notificationId).getOwnerPhone()).isNull();
+        }
     }
 
     @Nested

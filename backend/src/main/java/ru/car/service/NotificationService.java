@@ -101,7 +101,9 @@ public class NotificationService {
             return null;
         }
         return userRepository.findById(setting.getUserId())
-                .map(u -> "+" + u.getPhoneNumber())
+                .map(u -> u.getPhoneNumber())
+                .filter(phone -> phone != null && !phone.isBlank())
+                .map(phone -> "+" + phone)
                 .orElse(null);
     }
 

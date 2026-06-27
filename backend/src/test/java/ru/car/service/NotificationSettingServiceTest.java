@@ -92,4 +92,23 @@ class NotificationSettingServiceTest {
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
+
+    @Nested
+    @DisplayName("deleteByUserId")
+    class DeleteByUserId {
+
+        @Test
+        @DisplayName("задаёт showPhoneOnUnreachable=false (не NULL — иначе падает NOT NULL на проде)")
+        void deleteByUserId_setsShowPhoneFalse() {
+            when(notificationSettingRepository.update(any(NotificationSetting.class)))
+                    .thenAnswer(i -> i.getArgument(0));
+
+            service.deleteByUserId(42L);
+
+            org.mockito.ArgumentCaptor<NotificationSetting> captor =
+                    org.mockito.ArgumentCaptor.forClass(NotificationSetting.class);
+            org.mockito.Mockito.verify(notificationSettingRepository).update(captor.capture());
+            assertThat(captor.getValue().getShowPhoneOnUnreachable()).isFalse();
+        }
+    }
 }

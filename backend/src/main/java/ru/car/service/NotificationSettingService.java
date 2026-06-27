@@ -66,6 +66,7 @@ public class NotificationSettingService {
                 .telegramEnabled(false)
                 .active(false)
                 .telegramDialogId(null)
+                .showPhoneOnUnreachable(false)
                 .build());
     }
 
