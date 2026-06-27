@@ -21,4 +21,6 @@ public class NotificationSetting {
     private Boolean telegramEnabled;
     private Boolean active;
     private Long telegramDialogId;
+    /** BF5: показывать ли реальный номер владельца прохожему на экране статуса. По умолчанию false. */
+    private Boolean showPhoneOnUnreachable;
 }
