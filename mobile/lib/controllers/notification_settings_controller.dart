@@ -125,7 +125,7 @@ class NotificationSettingsController extends GetxController
   Future<void> launchTelegramBot() async {
     final url = await repository.getTelegramStartUrl();
     _awaitingTelegramBind = true;
-    await Utils.openUrl(url ?? TELEGRAM_BOT_URL);
+    Utils.openUrl(url ?? TELEGRAM_BOT_URL);
   }
 
   Future<void> _refreshAfterTelegramBind() async {
