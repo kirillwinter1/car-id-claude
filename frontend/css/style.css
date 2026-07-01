@@ -553,3 +553,32 @@ body:has(.modal) {
 .owner-call-button:active {
     opacity: 0.85;
 }
+
+/* BF6: развилка действий на странице метки */
+.qr-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 20px;
+    max-width: 420px;
+    margin: 0 auto;
+}
+
+.qr-action-btn {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    padding: 16px 20px;
+    border-radius: 24px;
+    font-weight: 600;
+    font-size: 1.06rem;
+    border: 2px solid var(--orange-button);
+    color: var(--orange-button);
+    background: #fff;
+    cursor: pointer;
+}
+
+.qr-action-primary {
+    background: var(--orange-button);
+    color: #fff;
+}

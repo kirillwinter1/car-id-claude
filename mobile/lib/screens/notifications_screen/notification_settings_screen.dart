@@ -81,7 +81,67 @@ class NotificationSettingsScreen extends StatelessWidget {
                             ),
                           ],
                         ),
-                        // SizedBox(height: SC.s(32)),
+                        SizedBox(height: SC.s(32)),
+
+                        ///
+                        /// BF6: контакты владельца для прохожего (развилка на скане)
+                        ///
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Показывать мой номер прохожему',
+                                style: textStyle,
+                              ),
+                            ),
+                            SizedBox(width: SC.s16),
+                            CustomSwitch(
+                              value: ctrl.showPhoneOnUnreachable,
+                              onChanged: (value) {
+                                ctrl.showPhoneOnUnreachable =
+                                    !ctrl.showPhoneOnUnreachable;
+                                ctrl.update();
+                                ctrl.changeSettings(
+                                    'show_phone', ctrl.showPhoneOnUnreachable);
+                              },
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: SC.s20),
+                        TextFormField(
+                          initialValue: ctrl.telegramContact,
+                          style: textStyle,
+                          decoration: const InputDecoration(
+                            labelText: 'Telegram',
+                            hintText: '@username',
+                          ),
+                          onFieldSubmitted: (v) =>
+                              ctrl.saveContact('telegram_contact', v.trim()),
+                        ),
+                        SizedBox(height: SC.s16),
+                        TextFormField(
+                          initialValue: ctrl.vkContact,
+                          style: textStyle,
+                          decoration: const InputDecoration(
+                            labelText: 'VK',
+                            hintText: 'vk.com/username или id',
+                          ),
+                          onFieldSubmitted: (v) =>
+                              ctrl.saveContact('vk_contact', v.trim()),
+                        ),
+                        SizedBox(height: SC.s16),
+                        TextFormField(
+                          initialValue: ctrl.maxContact,
+                          style: textStyle,
+                          decoration: const InputDecoration(
+                            labelText: 'MAX',
+                            hintText: 'вставьте ссылку max.ru/...',
+                          ),
+                          onFieldSubmitted: (v) =>
+                              ctrl.saveContact('max_contact', v.trim()),
+                        ),
+                        SizedBox(height: SC.s(32)),
 
                         ///
                         /// Telegram bot

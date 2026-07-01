@@ -37,6 +37,7 @@ class NotificationSettingRepositoryIntegrationTest extends BaseRepositoryTest {
                 .callEnabled(true)
                 .telegramEnabled(false)
                 .active(true)
+                .showPhoneOnUnreachable(false)
                 .build());
     }
 
@@ -99,14 +100,15 @@ class NotificationSettingRepositoryIntegrationTest extends BaseRepositoryTest {
     class ShowPhoneOnUnreachable {
 
         @Test
-        @DisplayName("по умолчанию false и обновляется через update")
-        void defaultsFalseAndUpdatable() {
+        @DisplayName("сохраняется и обновляется через update")
+        void savedAndUpdatable() {
             notificationSettingRepository.save(NotificationSetting.builder()
                     .userId(userWithoutSettings)
                     .pushEnabled(true)
                     .callEnabled(false)
                     .telegramEnabled(false)
                     .active(true)
+                    .showPhoneOnUnreachable(false)
                     .build());
 
             NotificationSetting saved = notificationSettingRepository.findByUserId(userWithoutSettings);
@@ -116,6 +118,35 @@ class NotificationSettingRepositoryIntegrationTest extends BaseRepositoryTest {
             notificationSettingRepository.update(saved);
 
             assertThat(notificationSettingRepository.findByUserId(userWithoutSettings).getShowPhoneOnUnreachable()).isTrue();
+        }
+    }
+
+    @Nested
+    @DisplayName("contacts (BF6)")
+    class Contacts {
+
+        @Test
+        @DisplayName("update сохраняет telegram/vk/max contact")
+        void updatePersistsContacts() {
+            notificationSettingRepository.save(NotificationSetting.builder()
+                    .userId(userWithoutSettings)
+                    .pushEnabled(true)
+                    .callEnabled(false)
+                    .telegramEnabled(false)
+                    .active(true)
+                    .showPhoneOnUnreachable(false)
+                    .build());
+
+            NotificationSetting s = notificationSettingRepository.findByUserId(userWithoutSettings);
+            s.setTelegramContact("@ivan");
+            s.setVkContact("ivan_vk");
+            s.setMaxContact("max.ru/u/abc");
+            notificationSettingRepository.update(s);
+
+            NotificationSetting r = notificationSettingRepository.findByUserId(userWithoutSettings);
+            assertThat(r.getTelegramContact()).isEqualTo("@ivan");
+            assertThat(r.getVkContact()).isEqualTo("ivan_vk");
+            assertThat(r.getMaxContact()).isEqualTo("max.ru/u/abc");
         }
     }
 }

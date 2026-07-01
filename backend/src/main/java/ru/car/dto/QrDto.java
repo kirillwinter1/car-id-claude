@@ -45,4 +45,6 @@ public class QrDto {
     @JsonFormat(pattern = ApplicationConstants.DATETIME_FORMAT)
     private LocalDateTime deleteDate;
     private Long userId;
+    @JsonProperty("owner_contacts")
+    private OwnerContactsDto ownerContacts;
 }

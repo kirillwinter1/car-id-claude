@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+		    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.4.xsd">
+
+    <changeSet id="1.19.1" author="claude">
+        <addColumn tableName="notification_settings" schemaName="${schema}">
+            <column name="telegram_contact" type="varchar(128)"/>
+            <column name="vk_contact" type="varchar(256)"/>
+            <column name="max_contact" type="varchar(256)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

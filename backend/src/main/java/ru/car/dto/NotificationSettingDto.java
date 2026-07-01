@@ -23,4 +23,11 @@ public class NotificationSettingDto {
     /** BF5: показывать ли номер владельца прохожему при неответе. */
     @JsonProperty("show_phone_on_unreachable")
     private Boolean showPhoneOnUnreachable;
+    /** BF6: публичные контакты владельца (сырой ввод). */
+    @JsonProperty("telegram_contact")
+    private String telegramContact;
+    @JsonProperty("vk_contact")
+    private String vkContact;
+    @JsonProperty("max_contact")
+    private String maxContact;
 }

@@ -23,4 +23,8 @@ public class NotificationSetting {
     private Long telegramDialogId;
     /** BF5: показывать ли реальный номер владельца прохожему на экране статуса. По умолчанию false. */
     private Boolean showPhoneOnUnreachable;
+    /** BF6: публичные контакты владельца для развилки на скане (сырой ввод; ссылку строит бэкенд). */
+    private String telegramContact;
+    private String vkContact;
+    private String maxContact;
 }

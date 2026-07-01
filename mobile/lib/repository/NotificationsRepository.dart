@@ -234,7 +234,7 @@ class NotificationsRepository extends GetConnect {
   /// Метод изменяет настройки юзера по уведомлениям
   ///
   Future<NotificationSettings?> patchNotificationSettings(
-      Map<String, bool> params) async {
+      Map<String, dynamic> params) async {
     var body = {
       "method": "notification_settings.patch",
       "params": params,

@@ -35,11 +35,9 @@ public class QrWebController {
             schema = @Schema(implementation = QrDto.class))))
     @GetMapping("qr/{id}")
     public ResponseEntity<QrDto> getQrForWeb(@PathVariable UUID id) {
-        QrDto dto = QrDto.builder()
-                .qrId(id)
-                .build();
         log.debug("принят запрос на получение сведений qr {} анонимным пользователем", id);
-        return ResponseEntity.ok(qrService.getQrById(dto));
+        // UUID-перегрузка: скрывает userId (toWebDto) и наполняет owner_contacts (BF6).
+        return ResponseEntity.ok(qrService.getQrById(id));
     }
 }
 

@@ -48,6 +48,25 @@ class NotificationSettingServiceTest {
     }
 
     @Nested
+    @DisplayName("create")
+    class Create {
+
+        @Test
+        @DisplayName("новый пользователь: showPhoneOnUnreachable=true (дефолт-ON)")
+        void create_defaultsShowPhoneTrue() {
+            when(notificationSettingRepository.save(any(NotificationSetting.class)))
+                    .thenAnswer(i -> i.getArgument(0));
+
+            service.create(99L);
+
+            org.mockito.ArgumentCaptor<NotificationSetting> c =
+                    org.mockito.ArgumentCaptor.forClass(NotificationSetting.class);
+            org.mockito.Mockito.verify(notificationSettingRepository).save(c.capture());
+            assertThat(c.getValue().getShowPhoneOnUnreachable()).isTrue();
+        }
+    }
+
+    @Nested
     @DisplayName("toggleChannel")
     class ToggleChannel {
 
@@ -109,6 +128,10 @@ class NotificationSettingServiceTest {
                     org.mockito.ArgumentCaptor.forClass(NotificationSetting.class);
             org.mockito.Mockito.verify(notificationSettingRepository).update(captor.capture());
             assertThat(captor.getValue().getShowPhoneOnUnreachable()).isFalse();
+            // BF6: удаление аккаунта обнуляет опубликованные контакты (приватность).
+            assertThat(captor.getValue().getTelegramContact()).isNull();
+            assertThat(captor.getValue().getVkContact()).isNull();
+            assertThat(captor.getValue().getMaxContact()).isNull();
         }
     }
 }

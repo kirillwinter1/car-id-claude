@@ -18,5 +18,8 @@ public interface NotificationSettingDtoMapper extends DtoMapper<NotificationSett
     @Mapping(target = "active", source = "active", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "telegramDialogId", source = "telegramDialogId", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "showPhoneOnUnreachable", source = "showPhoneOnUnreachable", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "telegramContact", source = "telegramContact", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "vkContact", source = "vkContact", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "maxContact", source = "maxContact", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     void updateIgnoreNull(NotificationSettingDto dto, @MappingTarget NotificationSetting setting);
 }
