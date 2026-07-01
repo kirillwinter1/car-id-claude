@@ -20,8 +20,9 @@ public final class ContactLinks {
 
     public static String max(String raw) {
         if (isBlank(raw)) return null;
-        String r = raw.trim();
-        return r.matches("(?i)^https?://.*") ? r : "https://" + r;
+        // Пинуем хост max.ru и форсим https — поле не должно превращаться в произвольный редирект.
+        String r = raw.trim().replaceFirst("(?i)^https?://", "");
+        return r.matches("(?i)^max\\.ru/.+") ? "https://" + r : null;
     }
 
     private static boolean isBlank(String s) {

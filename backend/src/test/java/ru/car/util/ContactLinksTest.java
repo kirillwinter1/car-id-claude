@@ -28,6 +28,16 @@ class ContactLinksTest {
     void max() {
         assertThat(ContactLinks.max("max.ru/u/abc")).isEqualTo("https://max.ru/u/abc");
         assertThat(ContactLinks.max("https://max.ru/u/abc")).isEqualTo("https://max.ru/u/abc");
+        assertThat(ContactLinks.max("http://max.ru/u/abc")).isEqualTo("https://max.ru/u/abc");
         assertThat(ContactLinks.max("")).isNull();
+    }
+
+    @Test
+    @DisplayName("max отвергает не-max.ru (защита от произвольного редиректа)")
+    void maxRejectsForeignHosts() {
+        assertThat(ContactLinks.max("evil.com")).isNull();
+        assertThat(ContactLinks.max("https://evil.com/phish")).isNull();
+        assertThat(ContactLinks.max("javascript:alert(1)")).isNull();
+        assertThat(ContactLinks.max("max.ru")).isNull(); // без пути
     }
 }

@@ -76,7 +76,7 @@ public class QrService {
             return null;
         }
         NotificationSetting setting = notificationSettingRepository.findByQrId(qr.getId());
-        if (setting == null) {
+        if (setting == null || Boolean.FALSE.equals(setting.getActive())) {
             return null;
         }
         String phone = null;

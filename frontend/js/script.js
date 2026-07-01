@@ -63,7 +63,10 @@ function actionButton(text, href, variant, onClick) {
     el.textContent = text;
     if (href) {
         el.href = href;
-        if (href.startsWith("http")) el.target = "_blank";
+        if (href.startsWith("http")) {
+            el.target = "_blank";
+            el.rel = "noopener noreferrer";
+        }
     }
     if (onClick) el.addEventListener("click", (e) => { e.preventDefault(); onClick(); });
     return el;

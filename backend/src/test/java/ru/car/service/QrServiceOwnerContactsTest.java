@@ -72,4 +72,36 @@ class QrServiceOwnerContactsTest {
 
         assertThat(qrService.getQrById(qrId).getOwnerContacts()).isNull();
     }
+
+    @Test
+    @DisplayName("телефон OFF, но мессенджер задан → phone=null, telegram отдаётся")
+    void phoneOffButMessengerSet() {
+        UUID qrId = UUID.randomUUID();
+        Qr qr = Qr.builder().id(qrId).userId(7L).build();
+        when(qrRepository.findById(qrId)).thenReturn(Optional.of(qr));
+        when(qrWebDtoMapper.toWebDto(qr)).thenReturn(QrDto.builder().qrId(qrId).build());
+        when(notificationSettingRepository.findByQrId(qrId)).thenReturn(
+                NotificationSetting.builder().userId(7L).active(true)
+                        .showPhoneOnUnreachable(false).telegramContact("@ivan").build());
+
+        var contacts = qrService.getQrById(qrId).getOwnerContacts();
+
+        assertThat(contacts).isNotNull();
+        assertThat(contacts.getPhone()).isNull();
+        assertThat(contacts.getTelegram()).isEqualTo("https://t.me/ivan");
+    }
+
+    @Test
+    @DisplayName("деактивированный аккаунт (active=false) → контакты не отдаём")
+    void deactivatedAccountHidesContacts() {
+        UUID qrId = UUID.randomUUID();
+        Qr qr = Qr.builder().id(qrId).userId(7L).build();
+        when(qrRepository.findById(qrId)).thenReturn(Optional.of(qr));
+        when(qrWebDtoMapper.toWebDto(qr)).thenReturn(QrDto.builder().qrId(qrId).build());
+        when(notificationSettingRepository.findByQrId(qrId)).thenReturn(
+                NotificationSetting.builder().userId(7L).active(false)
+                        .showPhoneOnUnreachable(true).telegramContact("@ivan").build());
+
+        assertThat(qrService.getQrById(qrId).getOwnerContacts()).isNull();
+    }
 }
