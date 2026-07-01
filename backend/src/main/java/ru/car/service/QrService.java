@@ -3,6 +3,7 @@ package ru.car.service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import ru.car.dto.OwnerContactsDto;
 import ru.car.dto.QrDto;
 import ru.car.enums.ErrorCode;
 import ru.car.enums.QrStatus;
@@ -10,10 +11,15 @@ import ru.car.exception.ForbiddenException;
 import ru.car.exception.NotFoundException;
 import ru.car.mapper.QrDtoMapper;
 import ru.car.mapper.QrWebDtoMapper;
+import ru.car.model.NotificationSetting;
 import ru.car.model.Qr;
+import ru.car.model.User;
 import ru.car.repository.NotificationRepository;
+import ru.car.repository.NotificationSettingRepository;
 import ru.car.repository.QrRepository;
+import ru.car.repository.UserRepository;
 import ru.car.service.security.AuthService;
+import ru.car.util.ContactLinks;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,6 +35,8 @@ public class QrService {
     private final NotificationRepository notificationRepository;
     private final AuthService authService;
     private final MetricService metricService;
+    private final NotificationSettingRepository notificationSettingRepository;
+    private final UserRepository userRepository;
 
     public Qr findByIdOrThrowNotFound(UUID id) {
         return qrRepository.findById(id)
@@ -56,7 +64,38 @@ public class QrService {
 
     @Transactional
     public QrDto getQrById(UUID id) {
-        return qrWebDtoMapper.toWebDto(findByIdOrThrowNotFound(id));
+        Qr qr = findByIdOrThrowNotFound(id);
+        QrDto dto = qrWebDtoMapper.toWebDto(qr);
+        dto.setOwnerContacts(resolveOwnerContacts(qr));
+        return dto;
+    }
+
+    /** BF6: опубликованные владельцем контакты для развилки на скане (null, если ничего не задано). */
+    private OwnerContactsDto resolveOwnerContacts(Qr qr) {
+        if (qr.getUserId() == null) {
+            return null;
+        }
+        NotificationSetting setting = notificationSettingRepository.findByQrId(qr.getId());
+        if (setting == null) {
+            return null;
+        }
+        String phone = null;
+        if (Boolean.TRUE.equals(setting.getShowPhoneOnUnreachable())) {
+            phone = userRepository.findById(setting.getUserId())
+                    .map(User::getPhoneNumber)
+                    .filter(p -> p != null && !p.isBlank())
+                    .map(p -> "+" + p)
+                    .orElse(null);
+        }
+        OwnerContactsDto contacts = OwnerContactsDto.builder()
+                .phone(phone)
+                .telegram(ContactLinks.telegram(setting.getTelegramContact()))
+                .vk(ContactLinks.vk(setting.getVkContact()))
+                .max(ContactLinks.max(setting.getMaxContact()))
+                .build();
+        boolean empty = contacts.getPhone() == null && contacts.getTelegram() == null
+                && contacts.getVk() == null && contacts.getMax() == null;
+        return empty ? null : contacts;
     }
 
     @Transactional
