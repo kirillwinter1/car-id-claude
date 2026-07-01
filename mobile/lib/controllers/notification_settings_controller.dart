@@ -15,6 +15,10 @@ class NotificationSettingsController extends GetxController
     'push': 'push_enabled',
     'call': 'call_enabled',
     'telegram': 'telegram_enabled',
+    'show_phone': 'show_phone_on_unreachable',
+    'telegram_contact': 'telegram_contact',
+    'vk_contact': 'vk_contact',
+    'max_contact': 'max_contact',
   };
 
   // текущие настройки уведомлений
@@ -26,6 +30,11 @@ class NotificationSettingsController extends GetxController
   late bool pushEnabled;
   late bool callEnabled;
   late bool telegramEnabled;
+  // BF6: публикация контактов владельца
+  late bool showPhoneOnUnreachable;
+  late String telegramContact;
+  late String vkContact;
+  late String maxContact;
 
   // Phase 2.4: признак, что пользователь ушёл в Telegram привязывать бота.
   // При возврате в приложение автоматически перезагружаем настройки,
@@ -63,6 +72,10 @@ class NotificationSettingsController extends GetxController
       pushEnabled = settings!.pushEnabled;
       callEnabled = settings!.callEnabled;
       telegramEnabled = settings!.telegramEnabled;
+      showPhoneOnUnreachable = settings!.showPhoneOnUnreachable;
+      telegramContact = settings!.telegramContact ?? '';
+      vkContact = settings!.vkContact ?? '';
+      maxContact = settings!.maxContact ?? '';
       update();
     }
   }
@@ -89,6 +102,21 @@ class NotificationSettingsController extends GetxController
       // если запрос на бэк не прошел то замапятся старые настройки
       mapSettings();
     }
+  }
+
+  /// BF6: сохранить текстовый контакт владельца (telegram/vk/max) на бэке.
+  void saveContact(String paramsName, String value) async {
+    if (!paramsNames.containsKey(paramsName)) return;
+    final NotificationSettings? newSettings = await repository
+        .patchNotificationSettings({paramsNames[paramsName]!: value}).timeout(
+            const Duration(seconds: TIMEOUT_DURATION_SECONDS),
+            onTimeout: () => null);
+    if (newSettings != null) {
+      settings = newSettings;
+    } else {
+      Utils.showSnackBar(title: 'Произошла ошибка обновления настроек');
+    }
+    mapSettings();
   }
 
   /// Phase 2.4: получить одноразовый deep-link и открыть Telegram.
