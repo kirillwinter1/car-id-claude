@@ -19,7 +19,7 @@ async function checkQr() {
             response = await response.json();
 
             if (response.status === "ACTIVE" || response.status === "TEMPORARY") {
-                createMsg();
+                renderActions(response.owner_contacts);
                 return;
             }
 
@@ -38,6 +38,35 @@ async function checkQr() {
     } catch (err) {
         showError(err);
     }
+}
+
+// BF6: развилка действий после скана — сообщить о событии / написать в мессенджер / позвонить.
+// «Сообщить о событии» ведёт в текущий флоу (createMsg → выбор причины). Остальное — прямые ссылки.
+function renderActions(contacts) {
+    const box = document.getElementById("qr-actions");
+    if (!box) { createMsg(); return; }
+
+    const buttons = [actionButton("Сообщить о событии", null, "primary", createMsg)];
+    if (contacts) {
+        if (contacts.telegram) buttons.push(actionButton("Написать в Telegram", contacts.telegram));
+        if (contacts.vk) buttons.push(actionButton("Написать в VK", contacts.vk));
+        if (contacts.max) buttons.push(actionButton("Написать в MAX", contacts.max));
+        if (contacts.phone) buttons.push(actionButton("Позвонить", "tel:" + contacts.phone));
+    }
+    box.replaceChildren(...buttons);
+    box.hidden = false;
+}
+
+function actionButton(text, href, variant, onClick) {
+    const el = href ? document.createElement("a") : document.createElement("button");
+    el.className = "qr-action-btn" + (variant === "primary" ? " qr-action-primary" : "");
+    el.textContent = text;
+    if (href) {
+        el.href = href;
+        if (href.startsWith("http")) el.target = "_blank";
+    }
+    if (onClick) el.addEventListener("click", (e) => { e.preventDefault(); onClick(); });
+    return el;
 }
 
 async function createMsg() {
