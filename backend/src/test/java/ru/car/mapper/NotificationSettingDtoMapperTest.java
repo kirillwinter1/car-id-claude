@@ -41,4 +41,18 @@ class NotificationSettingDtoMapperTest {
 
         assertThat(mapper.toDto(setting).getShowPhoneOnUnreachable()).isTrue();
     }
+
+    @Test
+    @DisplayName("updateIgnoreNull копирует contact-поля (BF6)")
+    void updateIgnoreNullCopiesContacts() {
+        NotificationSetting setting = NotificationSetting.builder().build();
+        NotificationSettingDto dto = NotificationSettingDto.builder()
+                .telegramContact("@ivan").vkContact("ivan_vk").maxContact("max.ru/u/abc").build();
+
+        mapper.updateIgnoreNull(dto, setting);
+
+        assertThat(setting.getTelegramContact()).isEqualTo("@ivan");
+        assertThat(setting.getVkContact()).isEqualTo("ivan_vk");
+        assertThat(setting.getMaxContact()).isEqualTo("max.ru/u/abc");
+    }
 }
