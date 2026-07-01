@@ -33,6 +33,7 @@ public class NotificationSettingService {
                 .callEnabled(false)
                 .telegramEnabled(false)
                 .active(true)
+                .showPhoneOnUnreachable(true)
                 .build());
     }
 
